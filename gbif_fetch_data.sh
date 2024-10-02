@@ -133,5 +133,17 @@ done
 ## Verify the download
 echo -e "Verifying the download...\n"
 7z t $DUMP
+teststatus="$?"
 
-echo -e "Done!\n"
+# `7z t` Exit Codes:
+#   0: No errors, the archive is valid.
+#   1: Warnings (some files were skipped or couldn't be tested).
+#   2: Fatal errors (archive is corrupted or the command failed).
+
+if [ $teststatus -eq 0 ]; then
+  echo "Archive is valid."
+else
+  echo "WARNING: Archive validation failed. Status code: $teststatus"
+  exit 1
+fi
+
