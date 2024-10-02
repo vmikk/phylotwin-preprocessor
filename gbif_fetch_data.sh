@@ -98,7 +98,7 @@ ID=$(echo "$RESPONSE" | tail -n 1)
 if [[ "$ID" =~ ^[0-9]+-[0-9]+$ ]]; then
   echo -e "Download key: $ID \n"
 else
-  echo -e "Invalid ID! Exiting...\n"
+  echo -e "WARNING: Invalid ID! Exiting...\n"
   exit 1
 fi
 
@@ -147,3 +147,21 @@ else
   exit 1
 fi
 
+## Save request parameters to a file
+echo -e "Saving request parameters to a file...\n"
+
+METADATA="${OUTDIR}/${ID}__${DATE}.txt"
+DOI=$(curl -Ss https://api.gbif.org/v1/occurrence/download/0036526-240906103802322 | jq -r ".doi")
+
+echo -e "Download key: $ID" >> $METADATA
+echo -e "Date: $DATE" >> $METADATA
+echo -e "DOI: $DOI" >> $METADATA
+echo -e "\nRequest parameters: \n" >> $METADATA
+curl -Ss https://api.gbif.org/v1/occurrence/download/0036526-240906103802322 >> $METADATA
+
+echo -e "To cite the dataset use the following DOI: $DOI \n"
+
+## Clean up 
+rm $JSON
+
+echo -e "All done!\n"
