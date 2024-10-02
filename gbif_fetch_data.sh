@@ -104,7 +104,7 @@ fi
 
 ## Download path
 DATE=$(date +"%y%m%d")
-DUMP="$OUTDIR/$ID__$DATE.zip"
+DUMP="${OUTDIR}/${ID}__${DATE}.zip"
 
 ## Check the status of the request
 echo -e "Checking request status [each 5 minutes]...\n"
@@ -120,7 +120,7 @@ do
       
       aria2c \
         https://api.gbif.org/v1/occurrence/download/request/$ID.zip \
-        -o $DUMP || { echo "Error downloading file"; exit 1; }
+        -d "${OUTDIR}" -o "${ID}__${DATE}.zip" || { echo -e "WARNING: Error downloading file\n"; exit 1; }
       
       break
   fi
