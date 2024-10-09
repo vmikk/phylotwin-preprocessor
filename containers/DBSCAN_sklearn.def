@@ -1,0 +1,22 @@
+Bootstrap: docker
+From: python:3.13.0-slim
+
+%post
+
+    ## Install Python libraries
+    pip install \
+      --no-cache-dir \
+      --root-user-action=ignore \
+        polars==1.9.0 \
+        scikit-learn==1.5.2 \
+        numpy==2.1.2 \
+        geopy==2.4.1 \
+        shapely==2.0.6
+
+%environment
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+    export PATH=/usr/local/bin:$PATH
+
+%runscript
+    exec /bin/bash
