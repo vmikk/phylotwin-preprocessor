@@ -4,7 +4,7 @@
 # python bin/DBSCAN_sklearn.py input_data.parquet output_data.parquet --epsilon_km 800 --min_samples 3
 
 
-import pandas as pd
+import polars as pl
 import numpy as np
 import argparse
 from sklearn.cluster import DBSCAN
@@ -15,11 +15,11 @@ KMS_PER_RADIAN = 6371.0088
 
 def load_data(file_path):
     logging.info(f"Loading data from {file_path}")
-    return pd.read_parquet(file_path)
+    return pl.read_parquet(file_path)
 
 def process_coordinates(df):
     logging.info("Processing coordinates")
-    coords = df[['decimallatitude', 'decimallongitude']].to_numpy()
+    coords = df.select(['decimallatitude', 'decimallongitude']).to_numpy()
     return np.radians(coords)  # Convert to radians for haversine metric
 
 def perform_dbscan(coords, epsilon, min_samples):
@@ -29,12 +29,14 @@ def perform_dbscan(coords, epsilon, min_samples):
 
 def remove_outliers(df, labels):
     logging.info("Removing outliers")
-    df['cluster'] = labels
-    return df[df['cluster'] != -1].drop(columns=['cluster']), df[df['cluster'] == -1]
+    df = df.with_column(pl.Series("cluster", labels))
+    retained_data = df.filter(pl.col('cluster') != -1)
+    outliers = df.filter(pl.col('cluster') == -1)
+    return retained_data.drop('cluster'), outliers
 
 def save_data(df, output_path):
     logging.info(f"Saving cleaned data to {output_path}")
-    df.to_parquet(output_path)
+    df.write_parquet(output_path)
 
 def main(input_file, output_file, epsilon_km, min_samples):
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
