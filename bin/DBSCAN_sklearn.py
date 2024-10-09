@@ -29,7 +29,8 @@ def perform_dbscan(coords, epsilon, min_samples):
 
 def remove_outliers(df, labels):
     logging.info("Removing outliers")
-    df = df.with_column(pl.Series("cluster", labels))
+    labels_series = pl.Series("cluster", labels)
+    df = df.with_columns([labels_series])
     retained_data = df.filter(pl.col('cluster') != -1)
     outliers = df.filter(pl.col('cluster') == -1)
     return retained_data.drop('cluster'), outliers
