@@ -1,0 +1,18 @@
+## Singularity definition file 
+## for the image containg all necessary tools to fetch species occurrence dump from GBIF
+
+## Dependencies:
+# - curl
+# - aria2
+# - jq
+# - 7z
+
+Bootstrap: docker
+From: debian:trixie-20240926-slim
+
+%post
+  apt-get update -qq \
+    && apt-get -y --no-install-recommends install \
+      zip unzip curl wget less p7zip-full aria2 jq ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
