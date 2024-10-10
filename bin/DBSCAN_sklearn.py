@@ -22,9 +22,9 @@ def process_coordinates(df):
     coords = df.select(['decimallatitude', 'decimallongitude']).to_numpy()
     return np.radians(coords)  # Convert to radians for haversine metric
 
-def perform_dbscan(coords, epsilon, min_samples, algorithm='ball_tree'):
+def perform_dbscan(coords, epsilon, min_samples, algorithm='ball_tree', n_jobs=1):
     logging.info(f"Performing DBSCAN with eps={epsilon} and min_samples={min_samples}")
-    db = DBSCAN(eps=epsilon, min_samples=min_samples, algorithm=algorithm, metric='haversine').fit(coords)
+    db = DBSCAN(eps=epsilon, min_samples=min_samples, algorithm=algorithm, metric='haversine', n_jobs=n_jobs).fit(coords)
     return db.labels_
 
 def remove_outliers(df, labels):
@@ -71,6 +71,7 @@ if __name__ == "__main__":
     parser.add_argument('--epsilon_km', type=float, required=True, help="Epsilon distance in kilometers")
     parser.add_argument('--min_samples', type=int, required=True, help="Minimum samples to form a cluster")
     parser.add_argument('--algorithm', type=str, default='ball_tree', help="Algorithm to use for the nearest neighbour search (default, 'ball_tree'; alternatively, 'kd_tree' or 'brute')")
+    parser.add_argument('--threads', type=int, default=1, help="Number of threads to use for parallel processing")
 
     args = parser.parse_args()
     main(args.input_file, args.output_file, args.epsilon_km, args.min_samples, args.algorithm)
