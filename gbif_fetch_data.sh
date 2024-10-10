@@ -10,7 +10,7 @@
 
 ## Output directory
 OUTDIR="$(pwd)/GBIF_dumps"
-mkdir -p $OUTDIR
+mkdir -p "${OUTDIR}"
 
 # Check if all required variables are set
 for var in GBIF_USERNAME GBIF_PASSWORD GBIF_EMAIL OUTDIR; do
@@ -20,9 +20,9 @@ done
 ## Create a temporary JSON file with the request parameters
 echo -e "Creating request file...\n"
 JSON=$(mktemp /tmp/gbif.XXXXXXXX.json)
-trap "rm $JSON" EXIT
+trap "rm ${JSON}" EXIT
 
-cat > $JSON <<EOT
+cat > "${JSON}" <<EOT
 {
     "format": "SIMPLE_PARQUET",
     "creator": "${GBIF_USERNAME}",
@@ -89,14 +89,14 @@ RESPONSE=$(curl -Ssi \
   )
 
 ## Print the GBIF response
-echo -e "GBIF response:\n\n$RESPONSE\n"
+echo -e "GBIF response:\n\n${RESPONSE}\n"
 
 ## Extract the download key (e.g., "0036526-240906103802322")
-ID=$(echo "$RESPONSE" | tail -n 1)
+ID=$(echo "${RESPONSE}" | tail -n 1)
 
 ## Validate the ID
-if [[ "$ID" =~ ^[0-9]+-[0-9]+$ ]]; then
-  echo -e "Download key: $ID \n"
+if [[ "${ID}" =~ ^[0-9]+-[0-9]+$ ]]; then
+  echo -e "Download key: ${ID} \n"
 else
   echo -e "WARNING: Invalid ID! Exiting...\n"
   exit 1
@@ -113,13 +113,13 @@ while true
 do
 
   echo -e "Checking status...\n"
-  STATUS=$(curl -Ss https://api.gbif.org/v1/occurrence/download/$ID | jq -r ".status")
+  STATUS=$(curl -Ss https://api.gbif.org/v1/occurrence/download/${ID} | jq -r ".status")
 
-  if [[ "$STATUS" == "SUCCEEDED" ]]; then
-      echo -e "Downloading to $DUMP ...\n"
+  if [[ "${STATUS}" == "SUCCEEDED" ]]; then
+      echo -e "Downloading to ${DUMP} ...\n"
       
       aria2c \
-        https://api.gbif.org/v1/occurrence/download/request/$ID.zip \
+        https://api.gbif.org/v1/occurrence/download/request/${ID}.zip \
         -d "${OUTDIR}" -o "${ID}__${DATE}.zip" || { echo -e "WARNING: Error downloading file\n"; exit 1; }
       
       break
@@ -132,7 +132,7 @@ done
 
 ## Verify the download
 echo -e "Verifying the download...\n"
-7z t $DUMP
+7z t "${DUMP}"
 teststatus="$?"
 
 # `7z t` Exit Codes:
@@ -140,7 +140,7 @@ teststatus="$?"
 #   1: Warnings (some files were skipped or couldn't be tested).
 #   2: Fatal errors (archive is corrupted or the command failed).
 
-if [ $teststatus -eq 0 ]; then
+if [ ${teststatus} -eq 0 ]; then
   echo "Archive is valid."
 else
   echo "WARNING: Archive validation failed. Status code: $teststatus"
@@ -151,17 +151,17 @@ fi
 echo -e "Saving request parameters to a file...\n"
 
 METADATA="${OUTDIR}/${ID}__${DATE}.txt"
-DOI=$(curl -Ss https://api.gbif.org/v1/occurrence/download/0036526-240906103802322 | jq -r ".doi")
+DOI=$(curl -Ss https://api.gbif.org/v1/occurrence/download/${ID} | jq -r ".doi")
 
-echo -e "Download key: $ID" >> $METADATA
-echo -e "Date: $DATE" >> $METADATA
-echo -e "DOI: $DOI" >> $METADATA
-echo -e "\nRequest parameters: \n" >> $METADATA
-curl -Ss https://api.gbif.org/v1/occurrence/download/0036526-240906103802322 >> $METADATA
+echo -e "Download key: ${ID}" >> "${METADATA}"
+echo -e "Date: ${DATE}" >> "${METADATA}"
+echo -e "DOI: ${DOI}" >> "${METADATA}"
+echo -e "\nRequest parameters: \n" >> "${METADATA}"
+curl -Ss https://api.gbif.org/v1/occurrence/download/${ID} >> "${METADATA}"
 
-echo -e "To cite the dataset use the following DOI: $DOI \n"
+echo -e "To cite the dataset use the following DOI: ${DOI} \n"
 
 ## Clean up 
-rm $JSON
+rm "${JSON}"
 
 echo -e "All done!\n"
