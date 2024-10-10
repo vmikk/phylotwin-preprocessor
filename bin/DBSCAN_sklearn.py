@@ -22,9 +22,9 @@ def process_coordinates(df):
     coords = df.select(['decimallatitude', 'decimallongitude']).to_numpy()
     return np.radians(coords)  # Convert to radians for haversine metric
 
-def perform_dbscan(coords, epsilon, min_samples):
+def perform_dbscan(coords, epsilon, min_samples, algorithm='ball_tree'):
     logging.info(f"Performing DBSCAN with eps={epsilon} and min_samples={min_samples}")
-    db = DBSCAN(eps=epsilon, min_samples=min_samples, algorithm='ball_tree', metric='haversine').fit(coords)
+    db = DBSCAN(eps=epsilon, min_samples=min_samples, algorithm=algorithm, metric='haversine').fit(coords)
     return db.labels_
 
 def remove_outliers(df, labels):
@@ -39,7 +39,7 @@ def save_data(df, output_path):
     logging.info(f"Saving cleaned data to {output_path}")
     df.write_parquet(output_path)
 
-def main(input_file, output_file, epsilon_km, min_samples):
+def main(input_file, output_file, epsilon_km, min_samples, algorithm):
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     
     ## Convert epsilon to radians
@@ -52,7 +52,7 @@ def main(input_file, output_file, epsilon_km, min_samples):
     coords = process_coordinates(df)
 
     ## Perform DBSCAN clustering
-    labels = perform_dbscan(coords, epsilon, min_samples)
+    labels = perform_dbscan(coords, epsilon, min_samples, algorithm)
 
     ## Remove outliers
     retained_data, outliers = remove_outliers(df, labels)
@@ -70,7 +70,8 @@ if __name__ == "__main__":
     parser.add_argument('output_file', type=str, help="Output parquet file path")
     parser.add_argument('--epsilon_km', type=float, required=True, help="Epsilon distance in kilometers")
     parser.add_argument('--min_samples', type=int, required=True, help="Minimum samples to form a cluster")
+    parser.add_argument('--algorithm', type=str, default='ball_tree', help="Algorithm to use for the nearest neighbour search (default, 'ball_tree'; alternatively, 'kd_tree' or 'brute')")
 
     args = parser.parse_args()
-    main(args.input_file, args.output_file, args.epsilon_km, args.min_samples)
+    main(args.input_file, args.output_file, args.epsilon_km, args.min_samples, args.algorithm)
 
