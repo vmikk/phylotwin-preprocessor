@@ -1,7 +1,30 @@
 
-### DBSCAN-based removal of spatial outliers
-## Usage:
-# python bin/DBSCAN_sklearn.py input_data.parquet output_data.parquet --epsilon_km 800 --min_samples 3
+### Spatial outlier removal using DBSCAN, HDBSCAN, or OPTICS (using scikit-learn library)
+## Usage examples:
+#
+### DBSCAN
+# python bin/DBSCAN_sklearn.py \
+#   input_data.parquet \
+#   output_dbscan.parquet \
+#   --method DBSCAN \
+#   --epsilon_km 800 \
+#   --min_samples 3
+# 
+### HDBSCAN
+# python bin/DBSCAN_sklearn.py \
+#   input_data.parquet \
+#   output_hdbscan.parquet \
+#   --method HDBSCAN \
+#   --min_samples 3 \
+#   --min_cluster_size 5
+# 
+### OPTICS
+# python bin/DBSCAN_sklearn.py \
+#   input_data.parquet \
+#   output_optics.parquet \
+#   --method OPTICS \
+#   --epsilon_km 800 \
+#   --min_samples 3
 
 
 import polars as pl
