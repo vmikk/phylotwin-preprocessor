@@ -57,7 +57,11 @@ def save_data(df, output_path):
 def main(input_file, output_file, method, epsilon_km, min_samples, min_cluster_size, algorithm, threads):
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     
-    ## Convert epsilon to radians
+    # Add input validation for epsilon_km
+    if method in ['DBSCAN', 'OPTICS'] and epsilon_km is None:
+        raise ValueError(f"epsilon_km must be provided for {method}")
+    
+    # Convert epsilon to radians
     epsilon = epsilon_km / KMS_PER_RADIAN if epsilon_km else None
     
     ## Load data
