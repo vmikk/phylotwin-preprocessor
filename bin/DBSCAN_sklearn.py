@@ -7,8 +7,7 @@
 import polars as pl
 import numpy as np
 import argparse
-from sklearn.cluster import DBSCAN, OPTICS
-import hdbscan
+from sklearn.cluster import DBSCAN, HDBSCAN, OPTICS
 import logging
 
 ## Constants
@@ -36,7 +35,7 @@ def perform_dbscan(coords, epsilon, min_samples, algorithm='ball_tree', n_jobs=1
 ## HDBSCAN
 def perform_hdbscan(coords, min_samples, min_cluster_size, algorithm='ball_tree', n_jobs=1):
     logging.info(f"Performing HDBSCAN with min_samples={min_samples}, min_cluster_size={min_cluster_size}")
-    hdb = hdbscan.HDBSCAN(min_samples=min_samples, min_cluster_size=min_cluster_size, metric='haversine', algorithm=algorithm, core_dist_n_jobs=n_jobs).fit(coords)
+    hdb = HDBSCAN(min_samples=min_samples, min_cluster_size=min_cluster_size, metric='haversine', algorithm=algorithm, core_dist_n_jobs=n_jobs).fit(coords)
     return hdb.labels_
 
 ## OPTICS
