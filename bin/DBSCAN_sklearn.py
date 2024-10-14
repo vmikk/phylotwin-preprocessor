@@ -16,7 +16,11 @@ KMS_PER_RADIAN = 6371.0088
 
 def load_data(file_path):
     logging.info(f"Loading data from {file_path}")
-    return pl.read_parquet(file_path)
+    try:
+        return pl.read_parquet(file_path)
+    except Exception as e:
+        logging.error(f"Error loading data from {file_path}: {str(e)}")
+        raise
 
 def process_coordinates(df):
     logging.info("Processing coordinates")
@@ -52,7 +56,11 @@ def remove_outliers(df, labels):
 
 def save_data(df, output_path):
     logging.info(f"Saving cleaned data to {output_path}")
-    df.write_parquet(output_path)
+    try:
+        df.write_parquet(output_path)
+    except Exception as e:
+        logging.error(f"Error saving data to {output_path}: {str(e)}")
+        raise
 
 def main(input_file, output_file, method, epsilon_km, min_samples, min_cluster_size, algorithm, threads):
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
