@@ -3,7 +3,7 @@
 ## Usage examples:
 #
 ### DBSCAN
-# python bin/DBSCAN_sklearn.py \
+# python bin/sklearn_outlier_removal.py \
 #   input_data.parquet \
 #   output_dbscan.parquet \
 #   --method DBSCAN \
@@ -11,7 +11,7 @@
 #   --min_samples 3
 # 
 ### HDBSCAN
-# python bin/DBSCAN_sklearn.py \
+# python bin/sklearn_outlier_removal.py \
 #   input_data.parquet \
 #   output_hdbscan.parquet \
 #   --method HDBSCAN \
@@ -19,7 +19,7 @@
 #   --min_cluster_size 5
 # 
 ### OPTICS
-# python bin/DBSCAN_sklearn.py \
+# python bin/sklearn_outlier_removal.py \
 #   input_data.parquet \
 #   output_optics.parquet \
 #   --method OPTICS \
