@@ -11,7 +11,7 @@
 #   --indextype RStarTree
 
 ## Path to ELKI
-ELKI="~/bin/elki-bundle-0.8.0.jar"
+ELKI="${HOME}/bin/elki-bundle-0.8.0.jar"
 
 ## Parameters
 INPUT=""
