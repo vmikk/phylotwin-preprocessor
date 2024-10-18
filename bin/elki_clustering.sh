@@ -84,8 +84,17 @@ if [[ $GEOMODEL != "WGS84SpheroidEarthModel" && $GEOMODEL != "SphericalVincentyE
     exit 1
 fi
 
-## Run ELKI clustering
-java -jar "$ELKI" ..
+## Substitute full class names for index types
+if [[ $INDEXTYPE == "MTree" ]]; then
+    INDEXTYPEF="tree.metrical.mtreevariants.mtree.MTreeFactory"
+    ADDITIONAL_PARAMS="-mtree.distancefunction geo.LatLngDistance"
+fi
+if [[ $INDEXTYPE == "RStarTree" ]]; then
+    INDEXTYPEF="tree.spatial.rstarvariants.rstar.RStarTreeFactory"
+    # ADDITIONAL_PARAMS=""
+fi
+
+
 
 echo -e "\nClustering completed\n"
 
