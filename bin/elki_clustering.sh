@@ -74,7 +74,13 @@ fi
 
 ## Validate nearest neighbor index type
 if [[ $INDEXTYPE != "MTree" && $INDEXTYPE != "RStarTree" ]]; then
-    echo "Error: Indextype must be either MTree or RStarTree"
+    echo "Error: Index type must be either 'MTree' or 'RStarTree'"
+    exit 1
+fi
+
+## Validate geometry model
+if [[ $GEOMODEL != "WGS84SpheroidEarthModel" && $GEOMODEL != "SphericalVincentyEarthModel" && $GEOMODEL != "SphericalHaversineEarthModel" ]]; then
+    echo "Error: Geomodel must be either 'WGS84SpheroidEarthModel' or 'SphericalVincentyEarthModel' or 'SphericalHaversineEarthModel'"
     exit 1
 fi
 
