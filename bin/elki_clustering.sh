@@ -117,5 +117,7 @@ if [[ $METHOD == "OPTICS" ]]; then
 
 fi
 
+fi
+
 echo -e "\nClustering completed\n"
 
