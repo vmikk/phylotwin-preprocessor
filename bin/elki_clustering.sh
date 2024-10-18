@@ -3,12 +3,14 @@
 ## Usage:
 # ./elki_clustering.sh \
 #   --input input.csv \
-#   --output output.csv \
+#   --output output.csv.gz \
 #   --method OPTICS \
 #   --geomodel WGS84SpheroidEarthModel \
 #   --epsilon 100000 \
 #   --minpts 5 \
 #   --indextype RStarTree
+
+# Epsilon is in meters
 
 ## Path to ELKI
 ELKI="${HOME}/bin/elki-bundle-0.8.0.jar"
@@ -123,8 +125,6 @@ if [[ $METHOD == "OPTICS" ]]; then
       -opticsxi.xi     0.006 \
       -resulthandler ResultWriter -out.gzip \
       -out "${OUTPUT}"
-
-fi
 
 fi
 
