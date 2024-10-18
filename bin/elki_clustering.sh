@@ -95,6 +95,27 @@ if [[ $INDEXTYPE == "RStarTree" ]]; then
 fi
 
 
+## Run OPTICS clustering
+if [[ $METHOD == "OPTICS" ]]; then
+
+    java -jar "${ELKI}" \
+      KDDCLIApplication \
+      -algorithm clustering.optics.OPTICSXi \
+      -opticsxi.algorithm OPTICSHeap \
+      -algorithm.distancefunction geo.LatLngDistance \
+      -pagefile.pagesize    1024 \
+      -spatial.bulkstrategy SortTileRecursiveBulkSplit \
+      -geo.model "$GEOMODEL" \
+      -dbc.in    "${INPUT}" \
+      -db.index  "$INDEXTYPEF" \
+      "$ADDITIONAL_PARAMS" \
+      -optics.epsilon "$EPSILON" \
+      -optics.minpts  "$MINPTS" \
+      -opticsxi.xi     0.006 \
+      -resulthandler ResultWriter -out.gzip \
+      -out "${OUTPUT}"
+
+fi
 
 echo -e "\nClustering completed\n"
 
