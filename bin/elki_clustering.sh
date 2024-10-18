@@ -95,6 +95,15 @@ if [[ $INDEXTYPE == "RStarTree" ]]; then
 fi
 
 
+echo -e "\nRunning ${METHOD} clustering with the following parameters:"
+echo "Input:       ${INPUT}"
+echo "Output:      ${OUTPUT}"
+echo "Geomodel:    $GEOMODEL"
+echo "Epsilon:     $EPSILON"
+echo "MinPts:      $MINPTS"
+echo "Index type:  $INDEXTYPE"
+echo -e "\n"
+
 ## Run OPTICS clustering
 if [[ $METHOD == "OPTICS" ]]; then
 
