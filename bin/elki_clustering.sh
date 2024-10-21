@@ -106,6 +106,10 @@ echo "MinPts:      $MINPTS"
 echo "Index type:  $INDEXTYPE"
 echo -e "\n"
 
+NUMRECORDS=$(zcat "${INPUT}" | wc -l)
+echo "Number of records in input file: ${NUMRECORDS}"
+echo -e "\n"
+
 ## Run OPTICS clustering
 if [[ $METHOD == "OPTICS" ]]; then
 
