@@ -1,5 +1,13 @@
 #!/bin/bash
 
+## Usage:
+# ./elki_lof.sh \
+#   --input input.csv \
+#   --output output.csv.gz \
+#   --method OPTICS \
+#   --geomodel WGS84SpheroidEarthModel \
+#   --indextype RStarTree \
+#   --k 5
 
 ## Path to ELKI
 ELKI="${HOME}/bin/elki-bundle-0.8.0.jar"
