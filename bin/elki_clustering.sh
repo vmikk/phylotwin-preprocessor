@@ -127,6 +127,21 @@ if [[ $METHOD == "OPTICS" ]]; then
       -optics.epsilon "$EPSILON" \
       -optics.minpts  "$MINPTS" \
       -opticsxi.xi     0.006 \
+
+## Run DBSCAN clustering
+if [[ $METHOD == "DBSCAN" ]]; then
+
+    java -jar "${ELKI}" \
+      KDDCLIApplication \
+      -algorithm clustering.dbscan.DBSCAN \
+      -algorithm.distancefunction geo.LatLngDistance \
+      -pagefile.pagesize    1024 \
+      -spatial.bulkstrategy SortTileRecursiveBulkSplit \
+      -geo.model "$GEOMODEL" \
+      -dbc.in    "${INPUT}" \
+      -db.index  "$INDEXTYPEF" \
+      -dbscan.epsilon "$EPSILON" \
+      -dbscan.minpts  "$MINPTS" \
       -resulthandler ResultWriter -out.gzip \
       -out "${OUTPUT}"
 
