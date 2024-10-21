@@ -70,7 +70,7 @@ fi
 
 ## Validate method
 if [[ $METHOD != "OPTICS" && $METHOD != "DBSCAN" ]]; then
-    echo "Error: Method must be either OPTICS or DBSCAN"
+    echo "Error: Method must be either 'OPTICS' or 'DBSCAN'"
     exit 1
 fi
 
