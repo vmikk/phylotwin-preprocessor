@@ -97,6 +97,33 @@ if [[ $INDEXTYPE == "RStarTree" ]]; then
 fi
 
 
+## Specify output handler
+OUTPUTTYPE="default"
+case $OUTPUTTYPE in
+    "default")
+        ## One large table with cluster membership, noise cluster, performance metrics, etc.
+        OUTPUTHANDLER="-resulthandler ResultWriter -out.gzip -out ${OUTPUT}"
+        ;;
+    "clustvect")
+        ## whitespace-separated cluster indexes
+        touch ${OUTPUT}
+        OUTPUTHANDLER="-resulthandler ClusteringVectorDumper -clustering.output ${OUTPUT} -clustering.output.append"
+        ;;
+    "noise")
+        OUTPUTHANDLER="-resulthandler ResultWriter -out.filter NoiseFilter -out.gzip -out ${OUTPUT}"
+        # OUTPUTHANDLER="-resulthandler ResultWriter -resulthandler.filter NoiseClusterFilter -out.gzip -out ${OUTPUT} "
+        # OUTPUTHANDLER="-resulthandler ResultWriter -evaluator clustering.EvaluateClustering -out.gzip -out ${OUTPUT}"
+        # OUTPUTHANDLER="-resulthandler ResultWriter -evaluator clustering.EvaluateClustering -paircounting.reference trivial.TrivialAllNoise -out ${OUTPUT} -out.gzip"
+        ;;
+    "discard")
+        ## Discard all output (e.g., for benchmarking)
+        OUTPUTHANDLER="-evaluator NoAutomaticEvaluation -resulthandler DiscardResultHandler"
+        ;;
+esac
+
+# -evaluator clustering.EvaluateClustering
+
+
 echo -e "\nRunning ${METHOD} clustering with the following parameters:"
 echo "Input:       ${INPUT}"
 echo "Output:      ${OUTPUT}"
@@ -104,6 +131,7 @@ echo "Geomodel:    $GEOMODEL"
 echo "Epsilon:     $EPSILON"
 echo "MinPts:      $MINPTS"
 echo "Index type:  $INDEXTYPE"
+echo "Output type: $OUTPUTTYPE"
 echo -e "\n"
 
 NUMRECORDS=$(zcat "${INPUT}" | wc -l)
@@ -127,6 +155,8 @@ if [[ $METHOD == "OPTICS" ]]; then
       -optics.epsilon "$EPSILON" \
       -optics.minpts  "$MINPTS" \
       -opticsxi.xi     0.006 \
+      $OUTPUTHANDLER
+
 
 ## Run DBSCAN clustering
 if [[ $METHOD == "DBSCAN" ]]; then
