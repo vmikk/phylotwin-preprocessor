@@ -1,6 +1,9 @@
 #!/bin/bash
 
 
+## Path to ELKI
+ELKI="${HOME}/bin/elki-bundle-0.8.0.jar"
+
 ## Parameters
 INPUT=""
 OUTPUT=""
