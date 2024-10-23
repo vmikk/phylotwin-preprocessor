@@ -43,6 +43,22 @@ while getopts "i:o:r:s:dc" opt; do
     esac
 done
 
+## Validate input parameters
+if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$H3_RESOLUTION" || -z "$SPECIES_KEY" ]]; then
+    echo -e "Error: Missing required parameters!\n"
+    usage
+fi
+
+if ! [[ "$H3_RESOLUTION" =~ ^[0-9]+$ ]] || [ "$H3_RESOLUTION" -lt 0 ] || [ "$H3_RESOLUTION" -gt 15 ]; then
+    echo -e "Error: H3 resolution must be an integer between 0 and 15!\n"
+    usage
+fi
+
+if ! [[ "$SPECIES_KEY" =~ ^[0-9]+$ ]]; then
+    echo -e "Error: Species key must be a positive integer!\n"
+    usage
+fi
+
 ## View user-supplied parameters
 echo -e "\nInput parameters:"
 echo "Input file: $INPUT_FILE"
