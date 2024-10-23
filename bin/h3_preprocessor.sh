@@ -16,11 +16,7 @@ usage() {
     echo "  -r H3_RESOLUTION : H3 resolution (0-15)"
     echo "  -s SPECIES_KEY   : Species key for filtering"
     echo "  -d               : Save SQL script for debugging (optional, default: true)"
-VARINPP="$1"
-VAROUTP="$2"
-VARH3RES="$3"
-VARSPEC="$4"
-SAVE_SQL_SCRIPT="${5:-true}" # Save commands sent to DuckDB (e.g., for debugging purpose)
+    echo "  -c               : Convert Parquet output to CSV (optional, default: true)"
     exit 1
 }
 
@@ -30,6 +26,7 @@ OUTPUT_FILE=""
 H3_RESOLUTION=""
 SPECIES_KEY=""
 SAVE_SQL_SCRIPT=true
+CONVERT_TO_CSV=true
 
 ## Parse command-line options
 while getopts "i:o:r:s:dc" opt; do
@@ -39,6 +36,7 @@ while getopts "i:o:r:s:dc" opt; do
         r) H3_RESOLUTION="$OPTARG" ;;
         s) SPECIES_KEY="$OPTARG" ;;
         d) SAVE_SQL_SCRIPT=true ;;
+        c) CONVERT_TO_CSV=true ;;
         *) usage ;;
     esac
 done
@@ -66,6 +64,7 @@ echo "Output file: $OUTPUT_FILE"
 echo "H3 resolution: $H3_RESOLUTION"
 echo "Species key: $SPECIES_KEY"
 echo "Save SQL script: $SAVE_SQL_SCRIPT"
+echo "Convert output to CSV: $CONVERT_TO_CSV"
 
 ## Start the SQL command
 echo -e "\nPreparing SQL command"
@@ -113,5 +112,15 @@ fi
 echo -e "\nExecuting DuckDB command"
 
 duckdb -c "${SQL_COMMAND}"
+
+## Convert Parquet output to CSV (for ELKI)
+if [ "$CONVERT_TO_CSV" = true ]; then
+    echo -e "\nConverting Parquet output to CSV"
+    
+    OUTPUT_FILE_CSV="${OUTPUT_FILE/.parquet/.csv.gz}"
+    duckdb -c "COPY (
+        SELECT * FROM read_parquet('${OUTPUT_FILE}')
+    ) TO '${OUTPUT_FILE_CSV}' (FORMAT CSV, HEADER false, COMPRESSION 'gzip');"
+fi
 
 echo -e "\nDone"
