@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Main workflow:
+## Script to prepare data for spatial outlier detection with ELKI
+
+## Main workflow:
 # - filter records using the `specieskey` column
 # - convert latitude/longitude coordinates to H3 cells
 # - keep unique H3 grids
@@ -41,8 +43,17 @@ while getopts "i:o:r:s:dc" opt; do
     esac
 done
 
+## View user-supplied parameters
+echo -e "\nInput parameters:"
+echo "Input file: $INPUT_FILE"
+echo "Output file: $OUTPUT_FILE"
+echo "H3 resolution: $H3_RESOLUTION"
+echo "Species key: $SPECIES_KEY"
+echo "Save SQL script: $SAVE_SQL_SCRIPT"
 
 ## Start the SQL command
+echo -e "\nPreparing SQL command"
+
 SQL_COMMAND="
 -- Install and load the H3 extension
 INSTALL h3 FROM community;
@@ -83,4 +94,8 @@ if [ "$SAVE_SQL_SCRIPT" = true ]; then
 fi
 
 ## Execute the SQL command
+echo -e "\nExecuting DuckDB command"
+
 duckdb -c "${SQL_COMMAND}"
+
+echo -e "\nDone"
