@@ -100,7 +100,7 @@ if [[ $INDEXTYPE == "MTree" ]]; then
 fi
 if [[ $INDEXTYPE == "RStarTree" ]]; then
     INDEXTYPEF="tree.spatial.rstarvariants.rstar.RStarTreeFactory"
-    ADDITIONAL_PARAMS="-rtree.bulk.spatial-sort HilbertSpatialSorter"
+    ADDITIONAL_PARAMS="-spatial.bulkstrategy SpatialSortBulkSplit -rtree.bulk.spatial-sort HilbertSpatialSorter"
 fi
 
 
@@ -301,7 +301,6 @@ java -jar "${ELKI}" \
       $ALGORITHM_PARAMS \
       -algorithm.distancefunction geo.LatLngDistance \
       -pagefile.pagesize 1024 \
-      -spatial.bulkstrategy SpatialSortBulkSplit \
       -geo.model "$GEOMODEL" \
       -dbc.in    "${INPUT}" \
       -db.index  "$INDEXTYPEF" \
