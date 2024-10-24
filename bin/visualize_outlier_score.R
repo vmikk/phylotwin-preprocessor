@@ -6,6 +6,7 @@ load_pckg <- function(pkg = "data.table"){
     cat(paste(pkg, packageVersion(pkg), "\n"))
 }
 
+cat("Loading packages:\n")
 load_pckg("data.table")
 load_pckg("plyr")
 load_pckg("sf")
@@ -38,8 +39,13 @@ INPUT <- opt$input
 OUTLIER <- opt$outlier
 PLOT <- opt$plot
 
+cat("\nInput parameters:\n")
+cat("..Input coordinates:", INPUT, "\n")
+cat("..Outlier scores:", OUTLIER, "\n")
+cat("..Output plots:", PLOT, "\n")
+
 ## Load world map
-cat("..Loading world map\n")
+cat("\n..Loading world map\n")
 world <- ne_countries(scale = "medium", returnclass = "sf")
 
 ## Load coordinates
@@ -51,12 +57,12 @@ cat("..Loading outlier scores\n")
 SCR <- fread(file = OUTLIER, header = F, col.names = c("ID", "OutlierScore"))
 
 ## Combine coordinates and outlier scores
-cat("..Combining coordinates and outlier scores\n")
+cat("..Combining coordinates and outlier scores\n\n")
 CRD$OutlierScore <- SCR$OutlierScore
 
 ## Plotting function
 ## with optional outlier bubbles (circle around point proportional to the score)
-show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5){
+show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose = TRUE){
   # x <- copy(CRD)
   # outlier_mode <- c("low", "medium", "high")  # quantile-based (ArcGIS-style) 
   # threshold_multiplier <- 5  # since scores can be too hight to display, restrict max values
@@ -84,6 +90,17 @@ show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5){
 
   x$Outlier <- factor(x$Outlier, levels = c(0, 1))
 
+  ## Stats
+  if(verbose == TRUE & !is.null(outlier_mode)){
+    nr <- nrow(x)
+    no <- nrow(x[ Outlier == 1 ])
+    cat("\nOutlier mode:", outlier_mode, "\n")
+    cat("..Number of records:", nr, "\n")
+    cat("..Number of outliers:", no, "\n")
+    cat("..Percentage of outliers:", round(no / nr * 100, 2), "%\n")
+  }
+
+  ## Convert to sf object
   xx <- sf::st_as_sf(x,
     coords = c("Longitude", "Latitude"),
     crs = 4326)
@@ -117,7 +134,7 @@ p2 <- show_occ(CRD, outlier_mode = "medium")
 p3 <- show_occ(CRD, outlier_mode = "high")
 
 ## Arrange plots in a row
-cat("..Arranging plots\n")
+cat("\n..Arranging plots\n")
 pp <- p1 + p2 + p3 + plot_layout(ncol = 1)
 
 ## Export plots
@@ -128,3 +145,4 @@ ggsave(
   width = 15, height = 22,
   units = "in", dpi = 300)
 
+cat("\nDone.\n")
