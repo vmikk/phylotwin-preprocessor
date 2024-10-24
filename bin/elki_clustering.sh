@@ -93,7 +93,7 @@ if [[ $INDEXTYPE == "MTree" ]]; then
 fi
 if [[ $INDEXTYPE == "RStarTree" ]]; then
     INDEXTYPEF="tree.spatial.rstarvariants.rstar.RStarTreeFactory"
-    # ADDITIONAL_PARAMS=""
+    ADDITIONAL_PARAMS="-spatial.bulkstrategy SpatialSortBulkSplit -rtree.bulk.spatial-sort HilbertSpatialSorter"
 fi
 
 
@@ -147,7 +147,6 @@ if [[ $METHOD == "OPTICS" ]]; then
       -opticsxi.algorithm OPTICSHeap \
       -algorithm.distancefunction geo.LatLngDistance \
       -pagefile.pagesize    1024 \
-      -spatial.bulkstrategy SortTileRecursiveBulkSplit \
       -geo.model "$GEOMODEL" \
       -dbc.in    "${INPUT}" \
       -db.index  "$INDEXTYPEF" \
@@ -156,6 +155,11 @@ if [[ $METHOD == "OPTICS" ]]; then
       -optics.minpts  "$MINPTS" \
       -opticsxi.xi     0.006 \
       $OUTPUTHANDLER
+
+    ## The other supported OPTICS algorithms:
+    # -opticsxi.algorithm FastOPTICS
+    # -opticsxi.algorithm OPTICSList
+fi
 
 
 ## Run DBSCAN clustering
@@ -166,10 +170,10 @@ if [[ $METHOD == "DBSCAN" ]]; then
       -algorithm clustering.dbscan.DBSCAN \
       -algorithm.distancefunction geo.LatLngDistance \
       -pagefile.pagesize    1024 \
-      -spatial.bulkstrategy SortTileRecursiveBulkSplit \
       -geo.model "$GEOMODEL" \
       -dbc.in    "${INPUT}" \
       -db.index  "$INDEXTYPEF" \
+      "$ADDITIONAL_PARAMS" \
       -dbscan.epsilon "$EPSILON" \
       -dbscan.minpts  "$MINPTS" \
       -resulthandler ResultWriter -out.gzip \
