@@ -4,7 +4,7 @@
 # ./elki_lof.sh \
 #   --input input.csv \
 #   --output output.csv.gz \
-#   --method OPTICS \
+#   --method LOF \
 #   --geomodel WGS84SpheroidEarthModel \
 #   --indextype RStarTree \
 #   --k 5
