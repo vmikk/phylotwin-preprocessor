@@ -18,7 +18,8 @@ OUTPUT=""
 METHOD=""
 GEOMODEL=""
 INDEXTYPE=""
-K=""
+K=""   # number of nearest neighbors
+D=""   # distance threshold (for DBOutlierScore and DBSCANOutlierDetection)
 
 ## Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -47,6 +48,10 @@ while [[ $# -gt 0 ]]; do
             K="$2"
             shift 2
             ;;
+        --d)
+            D="$2"
+            shift 2
+            ;;
         *)
             echo "Unknown option: $1"
             exit 1
@@ -56,12 +61,21 @@ done
 
 ## Validate required arguments
 if [[ -z $INPUT || -z $OUTPUT || -z $METHOD || -z $GEOMODEL || -z $INDEXTYPE ]]; then
-    echo "Usage: $0 --input <input_file> --output <output_file> --method <METHOD> --geomodel <geomodel> --indextype <MTree|RStarTree> [--epsilon <epsilon> --minpts <minpts> --k <k>]"
+    echo "Usage: $0 --input <input_file> --output <output_file> --method <METHOD> --geomodel <geomodel> --indextype <MTree|RStarTree> [--k <k> --d <d>]"
     exit 1
 fi
 
 ## Validate method
-VALID_METHODS=("LOF" "ALOCI" "COF" "FlexibleLOF" "INFLO" "KDEOS" "LDF" "LDOF" "LOCI" "LoOP" "SimplifiedLOF" "ParallelSimplifiedLOF" "SimpleKernelDensityLOF")
+VALID_METHODS=(\
+   "LOF" "ALOCI" "COF" "FlexibleLOF" "INFLO" "KDEOS" "LDF" \
+   "LDOF" "LOCI" "LoOP" "SimplifiedLOF" "SimpleKernelDensityLOF" \
+   "VarianceOfVolume" "KNNOutlier" "ODIN" "SOS" "KNNDD" "KNNSOS" \
+   "KNNWeightOutlier" "LocalIsolationCoefficient" "DBOutlierScore" \
+   "DBSCANOutlierDetection" "EMOutlier" "KMeansOutlierDetection" "KMeansMinusMinusOutlierDetection" "GLOSH" \
+   "SLOM" "SOF" "CTLuScatterplotOutlier" \
+   "DWOF" "COP" "SimpleCOP" "OPTICSOF" \
+   "TrivialAverageCoordinateOutlier")
+
 if [[ ! " ${VALID_METHODS[@]} " =~ " ${METHOD} " ]]; then
     echo "Error: Invalid method. Supported methods are: ${VALID_METHODS[*]}"
     exit 1
@@ -119,6 +133,10 @@ case $METHOD in
         # LoOP: Local Outlier Probabilities
         ALGORITHM_PARAMS="-algorithm outlier.lof.LoOP -loop.kcomp ${K}"
         ;;
+    LDOF)
+        # LDOF:Local Distance-Based Outlier Factor
+        ALGORITHM_PARAMS="-algorithm outlier.lof.LDOF -ldof.k ${K}"
+        ;;
     SimplifiedLOF)
         # SimplifiedLOF: Simplified Local Outlier Factor (does not use the reachability distance)
         ALGORITHM_PARAMS="-algorithm outlier.lof.SimplifiedLOF -lof.k ${K}"
@@ -131,7 +149,141 @@ case $METHOD in
         # Variance of Volume for outlier detection (The volume is estimated by the distance to the k-nearest neighbor, then the variance of volume is computed)
         ALGORITHM_PARAMS="-algorithm outlier.lof.VarianceOfVolume -vov.k ${K}"
         ;;
+    KNNOutlier)
+        # Outlier Detection based on the distance of an object to its k nearest neighbor
+        ALGORITHM_PARAMS="-algorithm outlier.distance.KNNOutlier -knno.k ${K}"
+        ;;
+    ODIN)
+        # ODIN: Outlier detection using k-nearest neighbour graph
+        ALGORITHM_PARAMS="-algorithm outlier.distance.ODIN -odin.k ${K}"
+        ;;
+    SOS)
+        # SOS: Stochastic Outlier Selection
+        ALGORITHM_PARAMS="-algorithm outlier.distance.SOS -sos.perplexity 4.5"
+        ;;
+    KNNDD)
+        # KNNDD: Nearest Neighbor Data Description (original k = 1)
+        ALGORITHM_PARAMS="-algorithm outlier.distance.KNNDD -knndd.k ${K}"
+        ;;
+    KNNSOS)
+        # KNNSOS: k-Nearest-Neighbor Stochastic Outlier Selection (default k = 16; perplexity = k/3)
+        ALGORITHM_PARAMS="-algorithm outlier.distance.KNNSOS -sos.k ${K}"
+        ;;
+    KNNWeightOutlier)
+        # KNNWeightOutlier: Outlier detection based on the sum of distances of an object to its k nearest neighbors
+        ALGORITHM_PARAMS="-algorithm outlier.distance.KNNWeightOutlier -knnwod.k ${K}"
+        ;;
+    LocalIsolationCoefficient)
+        # Local Isolation Coefficient
+        ALGORITHM_PARAMS="-algorithm outlier.distance.LocalIsolationCoefficient -lic.k ${K}"
+        ;;
+    DBOutlierScore)
+        # Distance Based Outlier Score (Compute percentage of neighbors in the given neighborhood with size d)
+        ALGORITHM_PARAMS="-algorithm outlier.distance.DBOutlierScore -dbod.d ${D}"
+        ;;
+    DBSCANOutlierDetection)
+        # DBSCAN Outlier Detection: Outlier Detection based on the Generalized DBSCAN clustering
+        ALGORITHM_PARAMS="-algorithm outlier.clustering.DBSCANOutlierDetection -gdbscan.core-model -dbscan.epsilon ${D} -dbscan.minpts ${K}"
+        ;;
+    EMOutlier)
+        # EM Outlier: Outlier Detection based on the generic EM clustering
+        ALGORITHM_PARAMS="-algorithm outlier.clustering.EMOutlier -em.k ${K}"
+        ;;
+    # KMeansOutlierDetection)
+    #     # Outlier detection by using k-means clustering
+    #     # NB! should be used with squared Euclidean distance only!
+    #     ALGORITHM_PARAMS="-algorithm outlier.clustering.KMeansOutlierDetection -kmeans.k ${K}"
+    #     ;;
+    KMeansMinusMinusOutlierDetection)
+        # KMeansMinusMinusOutlierDetection: (k-means--) A Unified Approach to Clustering and Outlier Detection
+        ALGORITHM_PARAMS="-algorithm outlier.clustering.KMeansMinusMinusOutlierDetection -kmeans.k ${K}"
+        ;;
+    GLOSH)
+        # GLOSH: Global-Local Outlier Scores from Hierarchies
+        ALGORITHM_PARAMS="-algorithm outlier.clustering.GLOSH -hdbscan.minPts ${K} -hdbscan.minclsize 1"
+        ;;
+    SLOM)
+        # SLOM: Spatial local outlier measure 
+        ALGORITHM_PARAMS=" -algorithm outlier.spatial.SLOM -neighborhood PrecomputedKNearestNeighborNeighborhood -neighborhood.distancefunction geo.LatLngDistance -neighborhood.k ${K}"
+        ;;
+    SOF)
+        # SOF: Spatial outlier factor
+        ALGORITHM_PARAMS="-algorithm outlier.spatial.SOF -neighborhood PrecomputedKNearestNeighborNeighborhood -neighborhood.distancefunction geo.LatLngDistance -neighborhood.k ${K}"
+        ;;
+    CTLuScatterplotOutlier)
+        # CTLuScatterplotOutlier (aka SLZ): Spatial Outlier Detection Algorithm using linear regression of attributes and the mean of their neighbors
+        ALGORITHM_PARAMS="-algorithm outlier.spatial.CTLuScatterplotOutlier -neighborhood PrecomputedKNearestNeighborNeighborhood -neighborhood.distancefunction geo.LatLngDistance -neighborhood.k ${K}"
+        ;;
+    DWOF)
+        # DWOF: Dynamic Window Outlier Factor
+        ALGORITHM_PARAMS="-algorithm outlier.DWOF -dwof.k ${K} -dwof.delta 1.1"
+        ;;
+    COP)
+        # COP: Correlation Outlier Probability
+        ALGORITHM_PARAMS="-algorithm outlier.COP -cop.k ${K}"
+        ;;
+    SimpleCOP)
+        # SimpleCOP: Correlation Outlier Probability
+        ALGORITHM_PARAMS="-algorithm outlier.SimpleCOP -cop.k 5"
+        ;;
+    OPTICSOF)
+        # OPTICS-OF: Identifying Local Outliers
+        ALGORITHM_PARAMS="-algorithm outlier.OPTICSOF -optics.minpts ${K}"
+        ;;
+    TrivialAverageCoordinateOutlier)
+        # TrivialAverageCoordinateOutlier: Trivial method that takes the average of all dimensions as outlier score
+        ALGORITHM_PARAMS="-algorithm outlier.trivial.TrivialAverageCoordinateOutlier"
+        ;;
 esac
+
+    ##### To be added
+
+    # ParallelSimplifiedLOF)
+    #     # ParallelSimplifiedLOF: Parallel implementation of Simplified-LOF Outlier detection using processors
+    #     ALGORITHM_PARAMS="-algorithm outlier.lof.ParallelSimplifiedLOF"
+    #     ;;
+    # ParallelLOF)
+    #     # ParallelLOF: Parallel implementation of the LOF Algorithm
+    #     ALGORITHM_PARAMS="-algorithm outlier.lof.ParallelLOF"
+    #     ;;
+
+    # -algorithm outlier.clustering.NoiseAsOutliers ++
+    #     -algorithm optics.OPTICSXi / -algorithm dbscan.LSDBC / .. etc
+
+    # CBLOF)
+    #     # CBLOF: Cluster-based local outlier factor
+    #     ALGORITHM_PARAMS="-algorithm outlier.clustering.CBLOF -cblof.alpha ? -cblof.beta ? -kmeans.k ${K}"
+    #     # alpha = The ratio of the size that separates the large clusters from the small clusters.
+    #     # beta = The minimal ratio between two consecutive clusters (when ordered descending by size) at which the boundary between the large and small clusters is set.
+    #     ;;
+
+
+    ##### Algorithms requiring additional parameters:
+
+    # LOCI)
+    #     # LOCI:  Local Correlation Integral (outlier = LOCI score > 3)
+    #     ALGORITHM_PARAMS="-algorithm outlier.lof.LOCI -loci.rmax ${D} -loci.nmin 20 -loci.alpha 0.5"
+    #     ;;
+
+    # FlexibleLOF)
+    #     # FlexibleLOF: Local Outlier Factor with additional options
+    #     ALGORITHM_PARAMS="-algorithm outlier.lof.FlexibleLOF -lof.krefer ${K} -lof.kreach ${K2}"
+    #     ;;
+
+    # KDEOS)
+    #     # KDEOS: Kernel Density Estimator Outlier Score
+    #     ALGORITHM_PARAMS="-algorithm outlier.lof.KDEOS -kdeos.k.min ${K} -kdeos.k.max ${K2}"  # -kdeos.kernel.minbw
+    #     ;;
+
+    # LDF)
+    #     # LDF: Outlier Detection with Kernel Density Functions
+    #     ALGORITHM_PARAMS="-algorithm outlier.lof.LDF -ldf.k ${K} -ldf.h ${H}"
+    #     ;;
+
+    # OnlineLOF)
+    #     # OnlineLOF: Incremental version of the LOF Algorithm, supports insertions and removals
+    #     ALGORITHM_PARAMS="-algorithm outlier.lof.OnlineLOF ..."
+    #     ;;
 
 
 echo "Algorithm parameters: ${ALGORITHM_PARAMS}"
