@@ -67,6 +67,8 @@ show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose =
   # outlier_mode <- c("low", "medium", "high")  # quantile-based (ArcGIS-style) 
   # threshold_multiplier <- 5  # since scores can be too hight to display, restrict max values
 
+  x <- copy(x)  # to avoid modifications to the original data (outside function)
+
   ## Quantile-based thresholds for outlier score (as in ArcGIS)
   if(!is.null(outlier_mode)){
     q3  <- quantile(x = x$OutlierScore, probs = 0.75, na.rm = TRUE)
