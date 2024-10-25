@@ -26,6 +26,9 @@ option_list <- list(
     make_option(c("-o", "--outlier"),
         type = "character", default = NULL,
         help = "Outlier scores (TSV format)"),
+    make_option(c("-b", "--binary"),
+        type = "logical", default = FALSE,
+        help = "Binary outlier scores (e.g., as in `DBSCANOutlierDetection` and `KMeansMinusMinusOutlierDetection`)"),
     make_option(c("-p", "--plot"),
         type = "character", default = NULL,
         help = "Output plots (PNG format)")
@@ -37,11 +40,12 @@ opt <- parse_args(OptionParser(option_list = option_list))
 ## Input parameters
 INPUT <- opt$input
 OUTLIER <- opt$outlier
-PLOT <- opt$plot
+BINARY  <- opt$binary
 
 cat("\nInput parameters:\n")
 cat("..Input coordinates:", INPUT, "\n")
 cat("..Outlier scores:", OUTLIER, "\n")
+cat("..Binary outlier scores:", BINARY, "\n")
 cat("..Output plots:", PLOT, "\n")
 
 ## Load world map
@@ -65,12 +69,16 @@ CRD$OutlierScore <- SCR$OutlierScore
 show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose = TRUE){
   # x <- copy(CRD)
   # outlier_mode <- c("low", "medium", "high")  # quantile-based (ArcGIS-style) 
+  # outlier_mode <- "binary"                    # outliers are 0/1
   # threshold_multiplier <- 5  # since scores can be too hight to display, restrict max values
 
   x <- copy(x)  # to avoid modifications to the original data (outside function)
 
   ## Quantile-based thresholds for outlier score (as in ArcGIS)
   if(!is.null(outlier_mode)){
+
+    if(!outlier_mode %in% "binary"){
+
     q3  <- quantile(x = x$OutlierScore, probs = 0.75, na.rm = TRUE)
     iqr <- IQR(x$OutlierScore, na.rm = TRUE)
     if(outlier_mode %in% "low")   { iqr <- iqr * 2   }
@@ -86,7 +94,11 @@ show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose =
     x[ , OutlierScore := OutlierScore ]
     x[ OutlierScore > thrsh * threshold_multiplier, OutlierScore := thrsh * threshold_multiplier ]
 
-  } else {
+    } else {   # binary outlier scores
+      x[ , Outlier := as.integer(OutlierScore) ]
+    }
+
+  } else {     # no outlier mode
     x[ , Outlier := 0 ]
   }
 
@@ -130,7 +142,9 @@ show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose =
 }
 
 ## Plot
-cat("..Plotting\n")
+cat("\n..Plotting\n")
+if(BINARY == FALSE){
+
 p1 <- show_occ(CRD, outlier_mode = "low")
 p2 <- show_occ(CRD, outlier_mode = "medium")
 p3 <- show_occ(CRD, outlier_mode = "high")
@@ -147,4 +161,19 @@ ggsave(
   width = 15, height = 22,
   units = "in", dpi = 300)
 
+} else {
+
+  p <- show_occ(CRD, outlier_mode = "binary")
+
+
+  cat("..Exporting plot\n")
+  ggsave(
+    filename = PLOT,
+    plot = p,
+    width = 15, height = 7.5,
+    units = "in", dpi = 300)
+
+}
+
 cat("\nDone.\n")
+
