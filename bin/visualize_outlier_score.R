@@ -31,22 +31,28 @@ option_list <- list(
         help = "Binary outlier scores (e.g., as in `DBSCANOutlierDetection` and `KMeansMinusMinusOutlierDetection`)"),
     make_option(c("-p", "--plot"),
         type = "character", default = NULL,
-        help = "Output plots (PNG format)")
+        help = "Output plots (PNG format)"),
+    make_option(c("-c", "--cropmap"),
+        type = "logical", default = FALSE,
+        help = "Crop map to the bounding box of the coordinates")
 )
 
 ## Parse the command line arguments
 opt <- parse_args(OptionParser(option_list = option_list))
 
 ## Input parameters
-INPUT <- opt$input
+INPUT   <- opt$input
 OUTLIER <- opt$outlier
 BINARY  <- opt$binary
+PLOT    <- opt$plot
+CROP    <- opt$cropmap
 
 cat("\nInput parameters:\n")
 cat("..Input coordinates:", INPUT, "\n")
 cat("..Outlier scores:", OUTLIER, "\n")
 cat("..Binary outlier scores:", BINARY, "\n")
 cat("..Output plots:", PLOT, "\n")
+cat("..Crop map:", CROP, "\n")
 
 ## Load world map
 cat("\n..Loading world map\n")
@@ -64,6 +70,19 @@ SCR <- fread(file = OUTLIER, header = F, col.names = c("ID", "OutlierScore"))
 cat("..Combining coordinates and outlier scores\n\n")
 CRD$OutlierScore <- SCR$OutlierScore
 
+## Score summary
+cat("..Score summary\n")
+print(summary(CRD$OutlierScore))
+
+## Find bounding box of the coordinates
+if(CROP == TRUE){
+  cat("..Finding bounding box of the coordinates\n")
+  bbox <- list(
+    x = c(min(CRD$Longitude), max(CRD$Longitude)),
+    y = c(min(CRD$Latitude),  max(CRD$Latitude))
+  )
+}
+
 ## Plotting function
 ## with optional outlier bubbles (circle around point proportional to the score)
 show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose = TRUE){
@@ -79,20 +98,20 @@ show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose =
 
     if(!outlier_mode %in% "binary"){
 
-    q3  <- quantile(x = x$OutlierScore, probs = 0.75, na.rm = TRUE)
-    iqr <- IQR(x$OutlierScore, na.rm = TRUE)
-    if(outlier_mode %in% "low")   { iqr <- iqr * 2   }
-    if(outlier_mode %in% "medium"){ iqr <- iqr * 1.5 }
-    thrsh <- q3 + iqr
-    if(any(is.infinite(x$OutlierScore))){
-      mx <- as.numeric(thrsh * 2)
-      x[ is.infinite(OutlierScore), OutlierScore := mx ]
-    }
-    x[ , Outlier := fifelse(OutlierScore < thrsh, 0, 1, na=NA) ]
-  
-    ## Restrict max values of thresholds to show on a map
-    x[ , OutlierScore := OutlierScore ]
-    x[ OutlierScore > thrsh * threshold_multiplier, OutlierScore := thrsh * threshold_multiplier ]
+      q3  <- quantile(x = x$OutlierScore, probs = 0.75, na.rm = TRUE)
+      iqr <- IQR(x$OutlierScore, na.rm = TRUE)
+      if(outlier_mode %in% "low")   { iqr <- iqr * 2   }
+      if(outlier_mode %in% "medium"){ iqr <- iqr * 1.5 }
+      thrsh <- q3 + iqr
+      if(any(is.infinite(x$OutlierScore))){
+        mx <- as.numeric(thrsh * 2)
+        x[ is.infinite(OutlierScore), OutlierScore := mx ]
+      }
+      x[ , Outlier := fifelse(OutlierScore < thrsh, 0, 1, na=NA) ]
+    
+      ## Restrict max values of thresholds to show on a map
+      x[ , OutlierScore := OutlierScore ]
+      x[ OutlierScore > thrsh * threshold_multiplier, OutlierScore := thrsh * threshold_multiplier ]
 
     } else {   # binary outlier scores
       x[ , Outlier := as.integer(OutlierScore) ]
@@ -145,26 +164,33 @@ show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose =
 cat("\n..Plotting\n")
 if(BINARY == FALSE){
 
-p1 <- show_occ(CRD, outlier_mode = "low")
-p2 <- show_occ(CRD, outlier_mode = "medium")
-p3 <- show_occ(CRD, outlier_mode = "high")
+  p1 <- show_occ(CRD, outlier_mode = "low")
+  p2 <- show_occ(CRD, outlier_mode = "medium")
+  p3 <- show_occ(CRD, outlier_mode = "high")
 
-## Arrange plots in a row
-cat("\n..Arranging plots\n")
-pp <- p1 + p2 + p3 + plot_layout(ncol = 1)
+  ## Arrange plots in a row
+  cat("\n..Arranging plots\n")
+  pp <- p1 + p2 + p3 + plot_layout(ncol = 1)
 
-## Export plots
-cat("..Exporting plots\n")
-ggsave(
-  filename = PLOT,
-  plot = pp,
-  width = 15, height = 22,
-  units = "in", dpi = 300)
+  if(CROP == TRUE){
+    pp <- pp + coord_sf(xlim = bbox$x, ylim = bbox$y, expand = TRUE)
+  }
+
+  ## Export plots
+  cat("..Exporting plots\n")
+  ggsave(
+    filename = PLOT,
+    plot = pp,
+    width = 15, height = 22,
+    units = "in", dpi = 300)
 
 } else {
 
   p <- show_occ(CRD, outlier_mode = "binary")
 
+  if(CROP == TRUE){
+    pp <- pp + coord_sf(xlim = bbox$x, ylim = bbox$y, expand = TRUE)
+  }
 
   cat("..Exporting plot\n")
   ggsave(
