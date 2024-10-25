@@ -1,5 +1,13 @@
 #!/bin/bash
 
+## Different methods for outlier detection:
+# - LOF-like or KNN-based methods
+# - Clustering-based methods
+# - Distance-based method (DBOutlierScore)
+# - Spatial methods (SLOM, SOF, SLZ)
+
+# Distance (`-d`) is in meters
+
 ## Usage:
 # ./elki_lof.sh \
 #   --input input.csv \
@@ -93,6 +101,13 @@ if [[ $GEOMODEL != "WGS84SpheroidEarthModel" && $GEOMODEL != "SphericalVincentyE
     exit 1
 fi
 
+## Validate k and d (both should be non-negative)
+## TODO.. but not for all methods
+# if [[ $K -lt 0 || $D -lt 0 ]]; then
+#     echo "Error: K and D must be non-negative"
+#     exit 1
+# fi
+
 ## Substitute full class names for index types
 if [[ $INDEXTYPE == "MTree" ]]; then
     INDEXTYPEF="tree.metrical.mtreevariants.mtree.MTreeFactory"
@@ -110,6 +125,7 @@ echo "Output:      ${OUTPUT}"
 echo "Geomodel:    $GEOMODEL"
 echo "Index type:  $INDEXTYPE"
 echo "K:           $K"
+echo "D:           $D"
 
 ALGORITHM_PARAMS=""
 case $METHOD in
@@ -287,6 +303,7 @@ esac
 
 
 echo "Algorithm parameters: ${ALGORITHM_PARAMS}"
+echo "Index parameters: ${ADDITIONAL_PARAMS}"
 echo -e "\n"
 
 NUMRECORDS=$(zcat "${INPUT}" | wc -l)
