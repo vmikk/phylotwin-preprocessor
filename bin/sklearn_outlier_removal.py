@@ -1,4 +1,3 @@
-
 ### Spatial outlier removal using DBSCAN, HDBSCAN, or OPTICS (using scikit-learn library)
 ## Usage examples:
 #
@@ -44,9 +43,9 @@ def load_data(file_path):
         logging.error(f"Error loading data from {file_path}: {str(e)}")
         raise
 
-def process_coordinates(df):
-    logging.info("Processing coordinates")
-    coords = df.select(['decimallatitude', 'decimallongitude']).to_numpy()
+def process_coordinates(df, lat_col='decimallatitude', lon_col='decimallongitude'):
+    logging.info(f"Processing coordinates using columns: {lat_col} and {lon_col}")
+    coords = df.select([lat_col, lon_col]).to_numpy()
     return np.radians(coords)  # Convert to radians for haversine metric
 
 ## DBSCAN
@@ -84,7 +83,7 @@ def save_data(df, output_path):
         logging.error(f"Error saving data to {output_path}: {str(e)}")
         raise
 
-def main(input_file, output_file, method, epsilon_km, min_samples, min_cluster_size, algorithm, threads):
+def main(input_file, output_file, method, epsilon_km, min_samples, min_cluster_size, algorithm, threads, lat_col, lon_col):
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     
     # Add input validation for epsilon_km
@@ -98,7 +97,7 @@ def main(input_file, output_file, method, epsilon_km, min_samples, min_cluster_s
     df = load_data(input_file)
 
     ## Process coordinates
-    coords = process_coordinates(df)
+    coords = process_coordinates(df, lat_col, lon_col)
 
     ## Perform clustering based on the chosen method
     if method == 'DBSCAN':
@@ -131,7 +130,8 @@ if __name__ == "__main__":
     parser.add_argument('--min_cluster_size', type=int, default=5, help="Minimum cluster size (used by HDBSCAN)")
     parser.add_argument('--algorithm', type=str, default='ball_tree', help="Algorithm to use for the nearest neighbour search (default, 'ball_tree'; alternatively, 'kd_tree' or 'brute')")
     parser.add_argument('--threads', type=int, default=1, help="Number of threads to use for parallel processing")
+    parser.add_argument('--lat_col', type=str, default='decimallatitude', help="Name of the latitude column (default: 'decimallatitude')")
+    parser.add_argument('--lon_col', type=str, default='decimallongitude', help="Name of the longitude column (default: 'decimallongitude')")
 
     args = parser.parse_args()
-    main(args.input_file, args.output_file, args.method, args.epsilon_km, args.min_samples, args.min_cluster_size, args.algorithm, args.threads)
-
+    main(args.input_file, args.output_file, args.method, args.epsilon_km, args.min_samples, args.min_cluster_size, args.algorithm, args.threads, args.lat_col, args.lon_col)
