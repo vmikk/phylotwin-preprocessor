@@ -9,7 +9,7 @@
 # Distance (`-d`) is in meters
 
 ## Usage:
-# ./elki_lof.sh \
+# ./elki_outlier.sh \
 #   --input input.csv \
 #   --output output.csv.gz \
 #   --method LOF \
