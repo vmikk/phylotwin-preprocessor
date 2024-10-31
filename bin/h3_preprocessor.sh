@@ -75,6 +75,16 @@ echo "Species key: $SPECIES_KEY"
 echo "Save SQL script: $SAVE_SQL_SCRIPT"
 echo "Convert output to CSV: $CONVERT_TO_CSV"
 
+if [[ -n "$THREADS" ]]; then
+    echo "Threads: $THREADS"
+fi
+if [[ -n "$MEMORY" ]]; then
+    echo "Memory: $MEMORY"
+fi
+if [[ -n "$TEMP_DIR" ]]; then
+    echo "Temp directory: $TEMP_DIR"
+fi
+
 ## Start the SQL command
 echo -e "\nPreparing SQL command"
 
