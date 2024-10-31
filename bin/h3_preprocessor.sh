@@ -10,11 +10,14 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-d] [-c]"
+    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-d] [-c]"
     echo "  -i INPUT_FILE    : Input Parquet file path"
     echo "  -o OUTPUT_FILE   : Output Parquet file path"
     echo "  -r H3_RESOLUTION : H3 resolution (0-15)"
     echo "  -s SPECIES_KEY   : Species key for filtering"
+    echo "  -t THREADS       : Number of CPU threads to use (optional)"
+    echo "  -m MEMORY        : Memory limit (e.g., '100GB') (optional)"
+    echo "  -x TEMP_DIR      : Temporary directory path (optional)"
     echo "  -d               : Save SQL script for debugging (optional, default: true)"
     echo "  -c               : Convert Parquet output to CSV (optional, default: true)"
     exit 1
@@ -25,16 +28,22 @@ INPUT_FILE=""
 OUTPUT_FILE=""
 H3_RESOLUTION=""
 SPECIES_KEY=""
+THREADS=""
+MEMORY=""
+TEMP_DIR=""
 SAVE_SQL_SCRIPT=true
 CONVERT_TO_CSV=true
 
 ## Parse command-line options
-while getopts "i:o:r:s:dc" opt; do
+while getopts "i:o:r:s:t:m:x:dc" opt; do
     case $opt in
         i) INPUT_FILE="$OPTARG" ;;
         o) OUTPUT_FILE="$OPTARG" ;;
         r) H3_RESOLUTION="$OPTARG" ;;
         s) SPECIES_KEY="$OPTARG" ;;
+        t) THREADS="$OPTARG" ;;
+        m) MEMORY="$OPTARG" ;;
+        x) TEMP_DIR="$OPTARG" ;;
         d) SAVE_SQL_SCRIPT=true ;;
         c) CONVERT_TO_CSV=true ;;
         *) usage ;;
@@ -69,7 +78,30 @@ echo "Convert output to CSV: $CONVERT_TO_CSV"
 ## Start the SQL command
 echo -e "\nPreparing SQL command"
 
-SQL_COMMAND="
+SQL_COMMAND=""
+
+## Add configuration settings (if provided)
+if [[ -n "$THREADS" ]]; then
+    SQL_COMMAND+="
+SET threads TO ${THREADS};
+"
+fi
+
+if [[ -n "$MEMORY" ]]; then
+    SQL_COMMAND+="
+SET memory_limit = '${MEMORY}';
+"
+fi
+
+if [[ -n "$TEMP_DIR" ]]; then
+    SQL_COMMAND+="
+PRAGMA temp_directory='${TEMP_DIR}';
+"
+fi
+
+
+SQL_COMMAND+="
+
 -- Install and load the H3 extension
 INSTALL h3 FROM community;
 LOAD h3;
