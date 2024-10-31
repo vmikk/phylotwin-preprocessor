@@ -199,7 +199,7 @@ case $METHOD in
         ;;
     DBSCANOutlierDetection)
         # DBSCAN Outlier Detection: Outlier Detection based on the Generalized DBSCAN clustering
-        ALGORITHM_PARAMS="-algorithm outlier.clustering.DBSCANOutlierDetection -gdbscan.core-model -dbscan.epsilon ${D} -dbscan.minpts ${K}"
+        ALGORITHM_PARAMS="-algorithm outlier.clustering.DBSCANOutlierDetection -gdbscan.neighborhood EpsilonNeighborPredicate -gdbscan.core-model -dbscan.epsilon ${D} -dbscan.minpts ${K}"
         ;;
     EMOutlier)
         # EM Outlier: Outlier Detection based on the generic EM clustering
