@@ -108,15 +108,15 @@ show_occ <- function(x, outlier_mode = NULL, threshold = NULL, threshold_multipl
       thrsh <- threshold
     }
 
-      if(any(is.infinite(x$OutlierScore))){
-        mx <- as.numeric(thrsh * 2)
+    if(any(is.infinite(x$OutlierScore))){
+      mx <- as.numeric(thrsh * 2)
         x[ is.infinite(OutlierScore), OutlierScore := mx ]
-      }
-      x[ , Outlier := fifelse(OutlierScore < thrsh, 0, 1, na=NA) ]
+    }
+    x[ , Outlier := fifelse(OutlierScore < thrsh, 0, 1, na=NA) ]
     
-      ## Restrict max values of thresholds to show on a map
-      x[ , OutlierScore := OutlierScore ]
-      x[ OutlierScore > thrsh * threshold_multiplier, OutlierScore := thrsh * threshold_multiplier ]
+    ## Restrict max values of thresholds to show on a map
+    x[ , OutlierScore := OutlierScore ]
+    x[ OutlierScore > thrsh * threshold_multiplier, OutlierScore := thrsh * threshold_multiplier ]
 
   } else {     # no outlier mode
     x[ , Outlier := 0 ]
