@@ -26,9 +26,9 @@ option_list <- list(
     make_option(c("-o", "--outlier"),
         type = "character", default = NULL,
         help = "Outlier scores (TSV format)"),
-    make_option(c("-b", "--binary"),
-        type = "logical", default = FALSE,
-        help = "Binary outlier scores (e.g., as in `DBSCANOutlierDetection` and `KMeansMinusMinusOutlierDetection`)"),
+    make_option(c("-t", "--threshold"),
+        type = "numeric", default = NULL,
+        help = "Fixed threshold for outlier scores"),
     make_option(c("-p", "--plot"),
         type = "character", default = NULL,
         help = "Output plots (PNG format)"),
@@ -41,16 +41,16 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list = option_list))
 
 ## Input parameters
-INPUT   <- opt$input
-OUTLIER <- opt$outlier
-BINARY  <- opt$binary
-PLOT    <- opt$plot
-CROP    <- opt$cropmap
+INPUT     <- opt$input
+OUTLIER   <- opt$outlier
+THRESHOLD <- opt$threshold
+PLOT      <- opt$plot
+CROP      <- opt$cropmap
 
 cat("\nInput parameters:\n")
 cat("..Input coordinates:", INPUT, "\n")
 cat("..Outlier scores:", OUTLIER, "\n")
-cat("..Binary outlier scores:", BINARY, "\n")
+cat("..Fixed threshold:", THRESHOLD, "\n")
 cat("..Output plots:", PLOT, "\n")
 cat("..Crop map:", CROP, "\n")
 
@@ -60,7 +60,7 @@ world <- ne_countries(scale = "medium", returnclass = "sf")
 
 ## Load coordinates
 cat("..Loading coordinates\n")
-CRD <- fread(file = INPUT, header = F, col.names = c("Latitude", "Longitude", "ID"))
+CRD <- fread(file = INPUT, header = F, col.names = c("Latitude", "Longitude"))
 
 ## Load outlier scores
 cat("..Loading outlier scores\n")
@@ -85,10 +85,10 @@ if(CROP == TRUE){
 
 ## Plotting function
 ## with optional outlier bubbles (circle around point proportional to the score)
-show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose = TRUE){
+show_occ <- function(x, outlier_mode = NULL, threshold = NULL, threshold_multiplier = 5, verbose = TRUE){
   # x <- copy(CRD)
   # outlier_mode <- c("low", "medium", "high")  # quantile-based (ArcGIS-style) 
-  # outlier_mode <- "binary"                    # outliers are 0/1
+  # outlier_mode <- "threshold"                 # fixed outlier threshold
   # threshold_multiplier <- 5  # since scores can be too hight to display, restrict max values
 
   x <- copy(x)  # to avoid modifications to the original data (outside function)
@@ -96,13 +96,18 @@ show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose =
   ## Quantile-based thresholds for outlier score (as in ArcGIS)
   if(!is.null(outlier_mode)){
 
-    if(!outlier_mode %in% "binary"){
+    if(!outlier_mode %in% "threshold"){
 
       q3  <- quantile(x = x$OutlierScore, probs = 0.75, na.rm = TRUE)
       iqr <- IQR(x$OutlierScore, na.rm = TRUE)
       if(outlier_mode %in% "low")   { iqr <- iqr * 2   }
       if(outlier_mode %in% "medium"){ iqr <- iqr * 1.5 }
       thrsh <- q3 + iqr
+    
+    } else { # fixed user-provided threshold
+      thrsh <- threshold
+    }
+
       if(any(is.infinite(x$OutlierScore))){
         mx <- as.numeric(thrsh * 2)
         x[ is.infinite(OutlierScore), OutlierScore := mx ]
@@ -112,10 +117,6 @@ show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose =
       ## Restrict max values of thresholds to show on a map
       x[ , OutlierScore := OutlierScore ]
       x[ OutlierScore > thrsh * threshold_multiplier, OutlierScore := thrsh * threshold_multiplier ]
-
-    } else {   # binary outlier scores
-      x[ , Outlier := as.integer(OutlierScore) ]
-    }
 
   } else {     # no outlier mode
     x[ , Outlier := 0 ]
@@ -162,7 +163,7 @@ show_occ <- function(x, outlier_mode = NULL, threshold_multiplier = 5, verbose =
 
 ## Plot
 cat("\n..Plotting\n")
-if(BINARY == FALSE){
+if(is.null(THRESHOLD)){
 
   p1 <- show_occ(CRD, outlier_mode = "low")
   p2 <- show_occ(CRD, outlier_mode = "medium")
@@ -185,11 +186,12 @@ if(BINARY == FALSE){
     units = "in", dpi = 300)
 
 } else {
+  ## Plot with fixed outlier threshold
 
-  p <- show_occ(CRD, outlier_mode = "binary")
+  p <- show_occ(CRD, outlier_mode = "threshold", threshold = THRESHOLD)
 
   if(CROP == TRUE){
-    pp <- pp + coord_sf(xlim = bbox$x, ylim = bbox$y, expand = TRUE)
+    p <- p + coord_sf(xlim = bbox$x, ylim = bbox$y, expand = TRUE)
   }
 
   cat("..Exporting plot\n")
