@@ -73,7 +73,37 @@ cat > "${JSON}" <<EOT
                         "TAXON_MATCH_HIGHERRANK"
                     ]
                 }
-            }
+            },
+            {
+                "type": "or",
+                "predicates": [
+                    {
+                        "type": "not",
+                        "predicate": {
+                            "type": "lessThan",
+                            "key": "COORDINATE_UNCERTAINTY_IN_METERS",
+                            "value": "100000"
+                            }
+                    },
+                    {
+                        "type": "isNull",
+                        "parameter": "COORDINATE_UNCERTAINTY_IN_METERS"
+                    }
+                ]
+            },
+            {
+                "type": "not",
+                "predicate": {
+                    "type": "in",
+                    "key": "COORDINATE_UNCERTAINTY_IN_METERS",
+                    "values": [
+                        "301",
+                        "3036",
+                        "999",
+                        "9999"
+                    ]
+                }
+            },
         ]
     }
 }
