@@ -44,12 +44,9 @@ cat > "${JSON}" <<EOT
                 "type": "not",
                 "predicate": {
                     "type": "in",
-                    "key": "ESTABLISHMENT_MEANS",
+                    "key": "DEGREE_OF_ESTABLISHMENT",
                     "values": [
-                        "MANAGED",
-                        "INTRODUCED",
-                        "INVASIVE",
-                        "NATURALISED"
+                        "MANAGED"
                     ]
                 }
             },
@@ -105,6 +102,24 @@ cat > "${JSON}" <<EOT
     }
 }
 EOT
+
+
+## ESTABLISHMENT_MEANS - exclude non-native species ?
+#            {
+#                "type": "not",
+#                "predicate": {
+#                    "type": "in",
+#                    "key": "ESTABLISHMENT_MEANS",
+#                    "values": [
+#                        "MANAGED",
+#                        "INTRODUCED",
+#                        "INVASIVE",
+#                        "NATURALISED"
+#                    ]
+#                }
+#            },
+
+
 
 ## Send the request to GBIF
 echo -e "Sending request to GBIF...\n"
