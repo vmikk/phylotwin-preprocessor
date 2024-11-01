@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+## Visualize outlier scores
+
 ## Function to load packages
 load_pckg <- function(pkg = "data.table"){
     suppressPackageStartupMessages( library(package = pkg, character.only = TRUE) )
@@ -60,7 +62,7 @@ world <- ne_countries(scale = "medium", returnclass = "sf")
 
 ## Load coordinates
 cat("..Loading coordinates\n")
-CRD <- fread(file = INPUT, header = F, col.names = c("Latitude", "Longitude"))
+CRD <- fread(file = INPUT, header = F, col.names = c("Latitude", "Longitude", "ID"))
 
 ## Load outlier scores
 cat("..Loading outlier scores\n")
