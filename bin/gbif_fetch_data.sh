@@ -78,12 +78,9 @@ cat > "${JSON}" <<EOT
                 "type": "or",
                 "predicates": [
                     {
-                        "type": "not",
-                        "predicate": {
-                            "type": "lessThan",
-                            "key": "COORDINATE_UNCERTAINTY_IN_METERS",
-                            "value": "100000"
-                            }
+                        "type": "lessThan",
+                        "key": "COORDINATE_UNCERTAINTY_IN_METERS",
+                        "value": "100000"
                     },
                     {
                         "type": "isNull",
