@@ -1,4 +1,8 @@
 #!/bin/bash
+# - Taxa excluded:
+#   - Kingdoms: Chromista (4), Protozoa (7), Viruses (8), incertae sedis (0)
+#   - Genera: Homo (2436435)
+#   - Species: Felis catus (2435035)
 
 ## Usage:
 # export GBIF_USERNAME=...
