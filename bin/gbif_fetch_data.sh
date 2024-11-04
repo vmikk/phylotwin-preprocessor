@@ -103,6 +103,36 @@ cat > "${JSON}" <<EOT
                     ]
                 }
             },
+            {
+                "type": "not",
+                "predicate": {
+                    "type": "in",
+                    "key": "KINGDOM_KEY",
+                    "values": [
+                        "4", "7", "8", "0"
+                    ]
+                }
+            },
+            {
+                "type": "not",
+                "predicate": {
+                    "type": "in",
+                    "key": "GENUS_KEY",
+                    "values": [
+                        "2436435"
+                    ]
+                }
+            },
+            {
+                "type": "not",
+                "predicate": {
+                    "type": "in",
+                    "key": "SPECIES_KEY",
+                    "values": [
+                        "2435035"
+                    ]
+                }
+            }
         ]
     }
 }
