@@ -37,6 +37,11 @@ cat > "${JSON}" <<EOT
             },
             {
                 "type": "equals",
+                "key": "HAS_COORDINATE",
+                "value": "true"
+            },
+            {
+                "type": "equals",
                 "key": "HAS_GEOSPATIAL_ISSUE",
                 "value": "false"
             },
