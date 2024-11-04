@@ -194,7 +194,7 @@ while true
 do
 
   echo -e "Checking status...\n"
-  STATUS=$(curl -Ss https://api.gbif.org/v1/occurrence/download/${ID} | jq -r ".status")
+  STATUS=$(curl -Ss "https://api.gbif.org/v1/occurrence/download/${ID}" | jq -r ".status")
 
   if [[ "${STATUS}" == "SUCCEEDED" ]]; then
       echo -e "Downloading to ${DUMP} ...\n"
@@ -232,13 +232,13 @@ fi
 echo -e "Saving request parameters to a file...\n"
 
 METADATA="${OUTDIR}/${ID}__${DATE}.txt"
-DOI=$(curl -Ss https://api.gbif.org/v1/occurrence/download/${ID} | jq -r ".doi")
+DOI=$(curl -Ss "https://api.gbif.org/v1/occurrence/download/${ID}" | jq -r ".doi")
 
 echo -e "Download key: ${ID}" >> "${METADATA}"
 echo -e "Date: ${DATE}" >> "${METADATA}"
 echo -e "DOI: ${DOI}" >> "${METADATA}"
 echo -e "\nRequest parameters: \n" >> "${METADATA}"
-curl -Ss https://api.gbif.org/v1/occurrence/download/${ID} >> "${METADATA}"
+curl -Ss "https://api.gbif.org/v1/occurrence/download/${ID}" >> "${METADATA}"
 
 echo -e "To cite the dataset use the following DOI: ${DOI} \n"
 
