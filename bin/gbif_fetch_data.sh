@@ -10,7 +10,11 @@
 # export GBIF_EMAIL=...
 # ./gbif_fetch_data.sh
 
-## More info on GBIF API: https://data-blog.gbif.org/post/gbif-api-beginners-guide/
+## More info on GBIF API:
+# https://techdocs.gbif.org/en/data-use/api-downloads
+# https://techdocs.gbif.org/en/openapi/v1/occurrence
+# https://data-blog.gbif.org/post/gbif-api-beginners-guide/
+# https://registry.gbif.org/vocabulary/search
 
 ## Output directory
 OUTDIR="$(pwd)/GBIF_dumps"
@@ -246,3 +250,6 @@ echo -e "To cite the dataset use the following DOI: ${DOI} \n"
 rm "${JSON}"
 
 echo -e "All done!\n"
+
+## Unpack the archive
+# 7z e "${DUMP}" -o"${DUMP/.zip/}/"
