@@ -131,7 +131,20 @@ if(! is.null(SOURCETREE)){
 }
 
 if(VERBOSE){
-  print(RES)
+  cat("\nSummary:\n")
+  print(RES$Tree)
+
+  if(! is.null(SOURCETREE)){
+    print(RES[ , .(SpeciesInTree, SpeciesInGBIF, SpeciesNotInGBIF) ], row.names = FALSE)
+    print(RES[ , .(Pct_SpeciesInGBIF, Pct_SpeciesNotInGBIF)], row.names = FALSE)
+    print(RES[ , .(SpeciesInSourceTree, OverallTreeTipsNotInGBIF, Pct_NameMatchedSpecies, Pct_OverallTreeTipsNotInGBIF)], row.names = FALSE)
+    print(RES[ , .(NumUniqueOccurrences, NumNonRedundantOccurrences)], row.names = FALSE)
+  } else {
+    print(RES[ , .(SpeciesInTree, SpeciesInGBIF, SpeciesNotInGBIF) ], row.names = FALSE)
+    print(RES[ , .(Pct_SpeciesInGBIF, Pct_SpeciesNotInGBIF)], row.names = FALSE)
+    print(RES[ , .(NumUniqueOccurrences, NumNonRedundantOccurrences)], row.names = FALSE)
+  }
+
 }
 
 ## Save the results
