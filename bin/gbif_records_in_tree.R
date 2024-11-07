@@ -4,9 +4,13 @@
 
 ## Usage:
 # Rscript bin/gbif_records_in_tree.R \
-#   --gbif   data/gbif_records_summary.tsv \
-#   --tree   phylogenies/tree.newick \
-#   --output gbif_records_in_tree.tsv
+#   --gbif        data/gbif_records_summary.tsv \
+#   --tree        phylogenies/tree.newick \
+#   --outputstats gbif_records_in_tree.tsv \
+#   --occurrence_threshold 100 \
+#   --output_large_occ     gbif_records_in_tree_large.tsv \
+#   --output_low_occ       gbif_records_in_tree_small.tsv
+
 
 ## Format of tip labels in the tree:
 # SpeciesKey___SpeciesName (e.g., "1925221___Lysandra_coridon")
