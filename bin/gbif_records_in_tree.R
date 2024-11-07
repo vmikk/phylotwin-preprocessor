@@ -41,9 +41,18 @@ option_list <- list(
     make_option(c("-s", "--sourcetree"),
         type = "character", default = NULL,
         help = "Input - Initial tree, before species name matching (Newick format), optional"),
-    make_option(c("-o", "--output"),
+    make_option(c("-o", "--outputstats"),
         type = "character", default = NULL,
-        help = "Output file (TSV format)"),
+        help = "Output file with summary statistics (TSV format)"),
+    make_option(c("-x", "--occurrence_threshold"),
+        type = "numeric", default = 100,
+        help = "Threshold for the number of occurrences"),
+    make_option(c("-L", "--output_large_occ"),
+        type = "character", default = NULL,
+        help = "Output file with a list of species keys with large number of occurrences (TSV format)"),
+    make_option(c("-l", "--output_low_occ"),
+        type = "character", default = NULL,
+        help = "Output file with a list of species keys with low number of occurrences (TSV format)"),
     make_option(c("-v", "--verbose"),
         action = "store_true", default = TRUE,
         help = "Print verbose output")
@@ -53,17 +62,23 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list = option_list))
 
 ## Input parameters
-GBIF       <- opt$gbif
-TREE       <- opt$tree
-SOURCETREE <- opt$sourcetree
-OUTPUT     <- opt$output
-VERBOSE    <- opt$verbose
+GBIF         <- opt$gbif
+TREE         <- opt$tree
+SOURCETREE   <- opt$sourcetree
+OUTPUTSTATS  <- opt$outputstats
+OCC_THRESHOLD    <- opt$occurrence_threshold
+OUTPUT_LARGE_OCC <- opt$output_large_occ
+OUTPUT_LOW_OCC   <- opt$output_low_occ
+VERBOSE          <- opt$verbose
 
 cat("\nInput parameters:\n")
 cat("..GBIF record summary:", GBIF, "\n")
 cat("..Phylogenetic tree:", TREE, "\n")
 cat("..Initial tree:", SOURCETREE, "\n")
-cat("..Output file:", OUTPUT, "\n")
+cat("..Output with summary statistics:", OUTPUTSTATS, "\n")
+cat("..Occurrence threshold:", OCC_THRESHOLD, "\n")
+cat("..Output with a list of species keys with large number of occurrences:", OUTPUT_LARGE_OCC, "\n")
+cat("..Output with a list of species keys with low number of occurrences:", OUTPUT_LOW_OCC, "\n")
 cat("..Verbose:", VERBOSE, "\n")
 
 ## Load GBIF records
@@ -147,6 +162,30 @@ if(VERBOSE){
 
 }
 
-## Save the results
-fwrite(x = RES, file = OUTPUT, sep = "\t")
+## Save summary statistics
+if(! is.null(OUTPUTSTATS)){
+  fwrite(x = RES, file = OUTPUTSTATS, sep = "\t")
+}
 
+
+## Check occurrence thresholds
+if(! is.null(OCC_THRESHOLD)){
+
+  ## Split species into those with large and small number of occurrences
+  CNTS[ , OccGroup := fifelse(NumUniqCoordsRounded2dp >= OCC_THRESHOLD, "Large", "Small") ]
+
+  cat("..Number of species with large number of occurrences:", sum(CNTS$OccGroup %in% "Large"), "\n")
+  cat("..Number of species with small number of occurrences:", sum(CNTS$OccGroup %in% "Small"), "\n")
+
+  ## Save the results 
+  if(! is.null(OUTPUT_LARGE_OCC)){
+    fwrite(x = CNTS[ OccGroup == "Large", .(specieskey, OccGroup, NumUniqCoordsRounded2dp) ], file = OUTPUT_LARGE_OCC, sep = "\t")
+  }
+
+  if(! is.null(OUTPUT_LOW_OCC)){
+    fwrite(x = CNTS[ OccGroup == "Small", .(specieskey, OccGroup, NumUniqCoordsRounded2dp) ], file = OUTPUT_LOW_OCC, sep = "\t")
+  }
+
+}
+
+cat("\nDone\n")
