@@ -76,3 +76,17 @@ process define_species_set {
 }
 
 
+// Workflow
+workflow {
+
+  // Input directory with GBIF species occurrences (parquet files)
+  ch_occurrence_dir = Channel.fromPath(params.occurrences)
+
+  // Count species occurrences
+  count_occurrences(ch_occurrence_dir)
+
+
+}
+
+
+
