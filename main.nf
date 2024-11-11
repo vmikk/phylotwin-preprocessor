@@ -41,22 +41,22 @@ process count_occurrences {
 // Define species set (given phylogenetic trees available)
 process define_species_set {
 
-    tag "${phylotree}"
+    tag "${taxon}"
 
     input:
       path occ_counts_csv
-      tuple val(phylotree), path(phylotree_processed), path(phylotree_initial)
+      tuple val(taxon), path(phylotree_initial), path(phylotree_processed)
 
     output:
-      path "${phylotree}_Occurrences_large.txt",  emit: occ_large
-      path "${phylotree}_Occurrences_small.txt",  emit: occ_small
-      path "${phylotree}_stats.txt",              emit: stats
+      path "${taxon}_Occurrences_large.txt",  emit: occ_large
+      path "${taxon}_Occurrences_small.txt",  emit: occ_small
+      path "${taxon}_stats.txt",              emit: stats
 
     script:
     """
     echo -e "Defining species set\n"
     echo "Occurrences counts: "   ${occ_counts_csv}
-    echo "Phylogenetic tree: "    ${phylotree}
+    echo "Phylogenetic tree: "    ${taxon}
     echo "Processed tree file: "  ${phylotree_processed}
     echo "Initial tree file: "    ${phylotree_initial}
     echo "Occurrence threshold: " ${params.outlier_occurrence_threshold}
@@ -68,11 +68,13 @@ process define_species_set {
       --tree                 ${phylotree_processed} \
       --sourcetree           ${phylotree_initial} \
       --occurrence_threshold ${params.outlier_occurrence_threshold} \
-      --outputstats          ${phylotree}_stats.txt \
-      --output_large_occ     ${phylotree}_Occurrences_large.txt \
-      --output_low_occ       ${phylotree}_Occurrences_small.txt
+      --outputstats          ${taxon}_stats.txt \
+      --output_large_occ     ${taxon}_Occurrences_large.txt \
+      --output_low_occ       ${taxon}_Occurrences_small.txt
 
     """
+}
+
 }
 
 
