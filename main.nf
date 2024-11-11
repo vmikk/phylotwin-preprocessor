@@ -22,27 +22,24 @@ process count_occurrences {
 
     output:
       path "Occurrences_counts.parquet", emit: occ_counts_parquet
-      path "Occurrences_counts.csv",     emit: occ_counts_csv
+      path "Occurrences_counts.csv.gz",  emit: occ_counts_csv
 
     script:
+    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
     """
-    echo "Counting species occurrences"
-    echo "Input directory: " ${input}
+    echo -e "Counting species occurrences\n"
 
-    extra_args = ""
-
-    if [ -n ${task.memory} ]; then
-        extra_args += " -m ${task.memory}"
-    fi
-    if [ -n ${task.tempDir} ]; then
-        extra_args += " -x ${task.tempDir}"
-    fi
+    echo "Input directory: " ${occurrences}
+    echo "CPUs: " ${task.cpus}
+    if [ ! -z ${memoryArg}  ]; then echo "Memory: ${memoryArg}";          fi
+    if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
 
     gbif_records_count.sh \
       -i ${occurrences} \
       -o "Occurrences_counts.parquet" \
       -t ${task.cpus} \
-      "$extra_args"
+      "${memoryArg}" "${tempDirArg}"
 
     echo "..Done"
     """
