@@ -98,6 +98,15 @@ workflow {
   // Count species occurrences
   count_occurrences(ch_occurrence_dir)
 
+  // Phylogenetic trees
+  ch_phylotrees = Channel.fromList(phylo_trees)
+
+  // Define species set, split into large and small occurrence sets
+  define_species_set(
+    count_occurrences.out.occ_counts_csv,
+    ch_phylotrees
+  )
+
 
 // On completion
 workflow.onComplete {
