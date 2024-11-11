@@ -1,7 +1,18 @@
 #!/usr/bin/env nextflow
 
-params.occurrences = './gbif_occurrences/'
-params.outdir      = './gbif_occurrences_processed/'
+params.occurrences  = './gbif_occurrences/'
+params.outdir       = './gbif_occurrences_processed/'
+
+// Phylogenetic trees
+params.t1   = './original_trees/'   // Original trees
+params.t2   = './processed_trees/'  // Trees with tips matched to GBIF specieskeys
+
+phylo_trees = [
+    tuple("Plants",      "${params.t1}/Tietje_2023_Seed_plants_TACT.nwk", "${params.t2}/Tietje_2023_Seed_plants_TACT.nwk"),
+    tuple("Mammals",     "${params.t1}/VertLife_Mammals.nwk",             "${params.t2}/VertLife_Mammals.nwk"),
+    tuple("Butterflies", "${params.t1}/Kawahara_2023_Butterflies.nwk",    "${params.t2}/Kawahara_2023_Butterflies.nwk")
+]
+
 
 // Count number of occurrences per species
 process count_occurrences {
