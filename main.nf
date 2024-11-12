@@ -178,7 +178,8 @@ workflow {
   pool_species_lists(ch_occcounts)
 
   // Channel with species keys for spatial outlier removal
-  ch_large_specieskey = pool_species_lists.out.occ_large.splitText()
+  // NB. results returned by `splitText` operator are always terminated by a `\n` newline character, so we need to trim it
+  ch_large_specieskey = pool_species_lists.out.occ_large.splitText().map{it -> it.trim()}
 
   // Prepare data for spatial outlier removal
   prepare_species(ch_occurrence_dir, ch_large_specieskey)
