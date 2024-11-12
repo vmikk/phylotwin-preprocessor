@@ -7,10 +7,13 @@ params.outdir       = './gbif_occurrences_processed/'
 params.t1   = './original_trees/'   // Original trees
 params.t2   = './processed_trees/'  // Trees with tips matched to GBIF specieskeys
 
+// List of phylogenetic trees
+// NB. taxon names (first element of tuple) should be unique
 phylo_trees = [
-    tuple("Plants",      "${params.t1}/Tietje_2023_Seed_plants_TACT.nwk", "${params.t2}/Tietje_2023_Seed_plants_TACT.nwk"),
-    tuple("Mammals",     "${params.t1}/VertLife_Mammals.nwk",             "${params.t2}/VertLife_Mammals.nwk"),
-    tuple("Butterflies", "${params.t1}/Kawahara_2023_Butterflies.nwk",    "${params.t2}/Kawahara_2023_Butterflies.nwk")
+    tuple("Plants",      "${params.t1}/Tietje_2023_Seed_plants_TACT.tre.gz",  "${params.t2}/Tietje_2023_Seed_plants_TACT.nwk"),
+    tuple("Ferns",       "${params.t1}/FTOL_1-7-0_sanger_con_dated.tre.gz",   "${params.t2}/Ferns_FTOL_1-7-0.nwk"),
+    tuple("Mammals",     "${params.t1}/VertLife_Mammals.tre.gz",              "${params.t2}/VertLife_Mammals.nwk"),
+    tuple("Butterflies", "${params.t1}/Kawahara_2023_Butterflies_Newick.tre", "${params.t2}/Kawahara_2023_Butterflies.nwk"),
 ]
 
 
