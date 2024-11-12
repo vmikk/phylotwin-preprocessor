@@ -100,7 +100,7 @@ process pool_species_lists {
 
     script:
     """
-    pool_occurrence_counts.r \
+    pool_occurrence_counts.R \
       --inpdir        occ_counts/ \
       --output_large  Occurrences_large.txt \
       --output_small  Occurrences_small.txt
