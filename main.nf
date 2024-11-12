@@ -114,11 +114,12 @@ workflow {
   // Phylogenetic trees
   ch_phylotrees = Channel.fromList(phylo_trees)
 
+  // Combine phylogenetic trees and occurrence counts
+  // tuple(taxon, phylotree_initial, phylotree_processed, occ_counts_csv)
+  ch_phylo_occ = ch_phylotrees.combine(count_occurrences.out.occ_counts_csv)
+
   // Define species set, split into large and small occurrence sets
-  define_species_set(
-    count_occurrences.out.occ_counts_csv,
-    ch_phylotrees
-  )
+  define_species_set(ch_phylo_occ)
 
 
 // On completion
