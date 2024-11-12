@@ -121,6 +121,14 @@ workflow {
   // Define species set, split into large and small occurrence sets
   define_species_set(ch_phylo_occ)
 
+  // Channel with occurrence counts (collected over different taxa)
+  ch_occcounts = define_species_set.out.occ_large
+    .merge(define_species_set.out.occ_small)
+    .collect()
+  
+  // Pool species lists from different taxonomic groups
+  pool_species_lists(ch_occcounts)
+
 
 // On completion
 workflow.onComplete {
