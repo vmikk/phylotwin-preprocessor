@@ -87,10 +87,12 @@ process define_species_set {
 
 
 // Pool species lists from different taxonomic groups
+// In different trees, there might the same species (e.g., outgroup species or if trees overlap),
+// therefore, we need to keep them only once in the pooled species list
 process pool_species_lists {
 
     input:
-      path occurrence_counts
+      path(occurrence_counts, stageAs: "occ_counts/*")
 
     output:
       path "Occurrences_large.txt", emit: occ_large
@@ -98,8 +100,10 @@ process pool_species_lists {
 
     script:
     """
-    cat *_Occurrences_large.txt > Occurrences_large.txt
-    cat *_Occurrences_small.txt > Occurrences_small.txt
+    pool_occurrence_counts.r \
+      --inpdir        occ_counts/ \
+      --output_large  Occurrences_large.txt \
+      --output_small  Occurrences_small.txt
     """
 }
 
