@@ -108,6 +108,43 @@ process pool_species_lists {
 }
 
 
+// Prepare data for spatial outlier removal (per species)
+process prepare_species {
+
+    tag "${specieskey}"
+
+    input:
+      path(occurrences)
+      each specieskey
+
+    output:
+      path "${specieskey}.parquet", emit: h3_binned
+      path "${specieskey}.csv.gz",  emit: h3_binned_csv
+
+    script:
+    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    """
+    echo -e "Preparing data for spatial outlier removal\n"
+
+    echo "Species occurrences: " ${occurrences}
+    echo "Species key: "         ${specieskey}
+    echo "Output file: "         ${specieskey}.parquet
+    echo "H3 resolution: "       ${params.outlier_h3_resolution}
+    if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
+    if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+
+    h3_preprocessor.sh \
+      -i ${occurrences}'/*' \
+      -s ${specieskey} \
+      -o ${specieskey}.parquet \
+      -r ${params.outlier_h3_resolution} \
+      "${memoryArg}" "${tempDirArg}"
+
+    echo "..Done"
+    """
+}
+
 
 // Workflow
 workflow {
