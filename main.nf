@@ -52,8 +52,7 @@ process define_species_set {
     tag "${taxon}"
 
     input:
-      path occ_counts_csv
-      tuple val(taxon), path(phylotree_initial), path(phylotree_processed)
+      tuple val(taxon), path(phylotree_initial, stageAs: "t1/*"), path(phylotree_processed, stageAs: "t2/*"), path(occ_counts_csv)
 
     output:
       path "${taxon}_Occurrences_large.txt",  emit: occ_large
