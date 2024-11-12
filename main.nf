@@ -83,7 +83,24 @@ process define_species_set {
     """
 }
 
+
+// Pool species lists from different taxonomic groups
+process pool_species_lists {
+
+    input:
+      path occurrence_counts
+
+    output:
+      path "Occurrences_large.txt", emit: occ_large
+      path "Occurrences_small.txt", emit: occ_small
+
+    script:
+    """
+    cat *_Occurrences_large.txt > Occurrences_large.txt
+    cat *_Occurrences_small.txt > Occurrences_small.txt
+    """
 }
+
 
 
 // Workflow
