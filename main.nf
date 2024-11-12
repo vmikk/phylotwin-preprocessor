@@ -17,6 +17,10 @@ phylo_trees = [
 ]
 
 
+// Spatial outlier removal
+params.outlier_h3_resolution        = 6
+params.outlier_occurrence_threshold = 100
+
 // Count number of occurrences per species
 process count_occurrences {
 
