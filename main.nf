@@ -136,6 +136,13 @@ workflow {
   // Pool species lists from different taxonomic groups
   pool_species_lists(ch_occcounts)
 
+  // Channel with species keys for spatial outlier removal
+  ch_large_specieskey = pool_species_lists.out.occ_large.splitText()
+
+  // Prepare data for spatial outlier removal
+  prepare_species(ch_occurrence_dir, ch_large_specieskey)
+
+
 
 // On completion
 workflow.onComplete {
