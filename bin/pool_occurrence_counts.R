@@ -75,7 +75,7 @@ occ_small <- alply(.data = fls_small, .margins = 1, .fun = load_fls)
 occ_large <- rbindlist(occ_large)
 occ_small <- rbindlist(occ_small)
 
-cat("\nKeeping only unique species:\n")
+cat("\nKeeping only unique species\n")
 
 occ_large <- unique(occ_large, by = "specieskey")
 occ_small <- unique(occ_small, by = "specieskey")
@@ -83,7 +83,10 @@ occ_small <- unique(occ_small, by = "specieskey")
 cat("Number of unique specieskeys [large]:", nrow(occ_large), "\n")
 cat("Number of unique specieskeys [small]:", nrow(occ_small), "\n")
 
-cat("\nExporting results:\n")
+setorder(occ_large, specieskey)
+setorder(occ_small, specieskey)
+
+cat("\nExporting results\n")
 
 fwrite(x = occ_large[, .(specieskey) ], file = OUTPUT_LARGE, sep = "\t", row.names = FALSE, col.names = FALSE)
 fwrite(x = occ_small[, .(specieskey) ], file = OUTPUT_SMALL, sep = "\t", row.names = FALSE, col.names = FALSE)
