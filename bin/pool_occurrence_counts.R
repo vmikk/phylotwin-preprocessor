@@ -3,7 +3,7 @@
 ## Pool species occurrence counts (from different phylogenetic trees)
 
 ## Usage:
-# Rscript bin/pool_occurrence_counts.r \
+# Rscript bin/pool_occurrence_counts.R \
 #   --inpdir        occ_counts/ \
 #   --output_large  pooled_occ_counts_large.tsv \
 #   --output_small  pooled_occ_counts_small.tsv
