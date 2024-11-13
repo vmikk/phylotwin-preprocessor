@@ -51,11 +51,11 @@ cat("..Output [small]:", OUTPUT_SMALL, "\n")
 fls_large <- list.files(path = INPDIR, pattern = "*_large.txt", full.names = TRUE)
 fls_small <- list.files(path = INPDIR, pattern = "*_small.txt", full.names = TRUE)
 
-cat("Number of files [large]:", length(fls_large), "\n")
+cat("\nNumber of files [large]:", length(fls_large), "\n")
 cat(paste(fls_large, collapse = "\n"))
 cat("\n")
 
-cat("Number of files [small]:", length(fls_small), "\n")
+cat("\nNumber of files [small]:", length(fls_small), "\n")
 cat(paste(fls_small, collapse = "\n"))
 cat("\n")
 
