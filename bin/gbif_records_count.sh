@@ -2,10 +2,22 @@
 
 ## Count number of records per species in GBIF data
 
-## Usage example:
+# Input should be a directory containing Parquet files
+
+## Usage examples:
+
 # ./gbif_records_count.sh \
 #  -i /path/to/GBIF/dump \
 #  -o GBIF_record_counts.parquet
+
+# ./gbif_records_count.sh \
+#  -i /path/to/GBIF/dump \
+#  -o GBIF_record_counts.parquet
+#  -b PRESERVED_SPECIMEN,HUMAN_OBSERVATION \
+#  -t 10 \
+#  -m 50GB \
+#  -x /path/to/temp \
+#  -d -c
 
 
 ## Function to display usage information
