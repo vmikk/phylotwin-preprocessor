@@ -24,6 +24,7 @@ process count_occurrences {
     script:
     def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
     def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     """
     echo -e "Counting species occurrences\n"
 
@@ -36,7 +37,8 @@ process count_occurrences {
       -i ${occurrences} \
       -o "Occurrences_counts.parquet" \
       -t ${task.cpus} \
-      "${memoryArg}" "${tempDirArg}"
+      "${memoryArg}" "${tempDirArg}" \
+      "${basisOfRecordArg}"
 
     echo "..Done"
     """
