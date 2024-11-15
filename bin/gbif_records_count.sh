@@ -104,6 +104,9 @@ echo "Output file: $OUTPUT"
 echo "Save SQL script: $SAVE_SQL_SCRIPT"
 echo "Convert output to CSV: $CONVERT_TO_CSV"
 
+if [[ -n "$BASIS_OF_RECORD" ]]; then
+    echo "Basis of record filter: $BASIS_OF_RECORD"
+fi
 if [[ -n "$THREADS" ]]; then
     echo "Threads: $THREADS"
 fi
@@ -113,6 +116,7 @@ fi
 if [[ -n "$TEMP_DIR" ]]; then
     echo "Temp directory: $TEMP_DIR"
 fi
+
 
 ## Start the SQL command
 echo -e "\nPreparing SQL command"
