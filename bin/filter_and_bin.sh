@@ -66,8 +66,8 @@ if ! [[ "$H3_RESOLUTION" =~ ^[0-9]+$ ]] || [ "$H3_RESOLUTION" -lt 0 ] || [ "$H3_
     usage
 fi
 
-if [ ! -f "$SPECIES_KEYS" ]; then
-    echo -e "Error: Species keys file '$SPECIES_KEYS' does not exist!\n"
+if [ ! -r "$SPECIES_KEYS" ]; then
+    echo -e "Error: Species keys file '$SPECIES_KEYS' does not exist or is not readable!\n"
     usage
 fi
 
