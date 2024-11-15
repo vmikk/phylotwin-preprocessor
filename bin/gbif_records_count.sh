@@ -10,20 +10,22 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT -o OUTPUT [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-d] [-c]"
-    echo "  -i INPUT    : Input Parquet file path"
-    echo "  -o OUTPUT   : Output Parquet file path"
-    echo "  -t THREADS       : Number of CPU threads to use (optional)"
-    echo "  -m MEMORY        : Memory limit (e.g., '100GB') (optional)"
-    echo "  -x TEMP_DIR      : Temporary directory path (optional)"
-    echo "  -d               : Save SQL script for debugging (optional, default: true)"
-    echo "  -c               : Convert Parquet output to CSV (optional, default: true)"
+    echo "Usage: $0 -i INPUT -o OUTPUT [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-d] [-c]"
+    echo "  -i INPUT          : Input directory containing Parquet files"
+    echo "  -o OUTPUT         : Output Parquet file path"
+    echo "  -b BASIS_OF_RECORD: Comma-separated list of basis of record values to include (optional)"
+    echo "  -t THREADS        : Number of CPU threads to use (optional)"
+    echo "  -m MEMORY         : Memory limit (e.g., '100GB') (optional)"
+    echo "  -x TEMP_DIR       : Temporary directory path (optional)"
+    echo "  -d                : Save SQL script for debugging (optional, default: true)"
+    echo "  -c                : Convert Parquet output to CSV (optional, default: true)"
     exit 1
 }
 
 ## Initialize variables
 INPUT=""
 OUTPUT=""
+BASIS_OF_RECORD=""
 THREADS=""
 MEMORY=""
 TEMP_DIR=""
@@ -31,10 +33,11 @@ SAVE_SQL_SCRIPT=true
 CONVERT_TO_CSV=true
 
 ## Parse command-line options
-while getopts "i:o:r:s:t:m:x:dc" opt; do
+while getopts "i:o:b:t:m:x:dc" opt; do
     case $opt in
         i) INPUT="$OPTARG" ;;
         o) OUTPUT="$OPTARG" ;;
+        b) BASIS_OF_RECORD="$OPTARG" ;;
         t) THREADS="$OPTARG" ;;
         m) MEMORY="$OPTARG" ;;
         x) TEMP_DIR="$OPTARG" ;;
@@ -97,7 +100,17 @@ SQL_COMMAND+="
 CREATE VIEW species_data AS
 SELECT specieskey, decimallatitude, decimallongitude, kingdom, phylum, class, \"order\", family, genus, species
 FROM read_parquet('${INPUT}/*')
-WHERE decimallatitude IS NOT NULL AND decimallongitude IS NOT NULL;
+WHERE decimallatitude IS NOT NULL AND decimallongitude IS NOT NULL"
+
+# Add basis of record filter if specified
+if [[ -n "$BASIS_OF_RECORD" ]]; then
+    # Convert comma-separated string to SQL IN clause format
+    BASIS_LIST=$(echo "${BASIS_OF_RECORD}" | sed "s/,/','/g")
+    BASIS_LIST="'$BASIS_LIST'"
+    SQL_COMMAND+=" AND basisofrecord IN (${BASIS_LIST})"
+fi
+
+SQL_COMMAND+=";
 
 -- Count the number of records per unique 'specieskey' (raw counts)
 CREATE TABLE raw_counts AS
