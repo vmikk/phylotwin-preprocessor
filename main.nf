@@ -103,7 +103,6 @@ process pool_species_lists {
     """
 }
 
-
 // Prepare data for spatial outlier removal (per species)
 process prepare_species {
 
@@ -120,6 +119,7 @@ process prepare_species {
     script:
     def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
     def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     """
     echo -e "Preparing data for spatial outlier removal\n"
 
@@ -135,7 +135,14 @@ process prepare_species {
       -s ${specieskey} \
       -o ${specieskey}.parquet \
       -r ${params.outlier_h3_resolution} \
-      "${memoryArg}" "${tempDirArg}"
+      -t ${task.cpus} \
+      "${memoryArg}" "${tempDirArg}" \
+      "${basisOfRecordArg}"
+
+    echo "..Done"
+    """
+}
+
 
     echo "..Done"
     """
