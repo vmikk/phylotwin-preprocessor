@@ -1,12 +1,5 @@
 #!/usr/bin/env nextflow
 
-params.occurrences  = './gbif_occurrences/'
-params.outdir       = './gbif_occurrences_processed/'
-
-// Phylogenetic trees
-params.t1   = './original_trees/'   // Original trees
-params.t2   = './processed_trees/'  // Trees with tips matched to GBIF specieskeys
-
 // List of phylogenetic trees
 // NB. taxon names (first element of tuple) should be unique
 phylo_trees = [
@@ -17,9 +10,6 @@ phylo_trees = [
 ]
 
 
-// Spatial outlier removal
-params.outlier_h3_resolution        = 6
-params.outlier_occurrence_threshold = 100
 
 // Count number of occurrences per species
 process count_occurrences {
