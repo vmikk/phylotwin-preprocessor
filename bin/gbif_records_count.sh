@@ -65,6 +65,13 @@ if [[ -z "$INPUT" || -z "$OUTPUT" ]]; then
     usage
 fi
 
+## Threads should be a positive integer
+if [[ -n "$THREADS" && "$THREADS" -le 0 ]]; then
+    echo -e "Error: Threads must be a positive integer!\n"
+    usage
+fi
+
+
 ## View user-supplied parameters
 echo -e "\nInput parameters:"
 echo "Input directory: $INPUT"
