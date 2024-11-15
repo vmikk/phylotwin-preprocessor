@@ -12,7 +12,7 @@
 ## Main workflow:
 # - filter records using the `specieskey` column
 # - optionally filter records using the `basis_of_record` column
-# - bin and count occurrences per H3 cell
+# - bin and count occurrences per H3 cell, species, and collection year
 # - aggregate data sources
 
 
@@ -66,8 +66,8 @@ if ! [[ "$H3_RESOLUTION" =~ ^[0-9]+$ ]] || [ "$H3_RESOLUTION" -lt 0 ] || [ "$H3_
     usage
 fi
 
-if ! [[ "$SPECIES_KEYS" =~ ^[0-9]+$ ]]; then
-    echo -e "Error: Species key must be a positive integer!\n"
+if [ ! -f "$SPECIES_KEYS" ]; then
+    echo -e "Error: Species keys file '$SPECIES_KEYS' does not exist!\n"
     usage
 fi
 
