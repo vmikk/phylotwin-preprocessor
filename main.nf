@@ -109,12 +109,11 @@ process prepare_species {
     tag "${specieskey}"
 
     input:
-      path(occurrences)
-      each specieskey
+      tuple val(specieskey), path(occurrences)
 
     output:
-      path "${specieskey}.parquet", emit: h3_binned
-      path "${specieskey}.csv.gz",  emit: h3_binned_csv
+      tuple val(specieskey), path("${specieskey}.csv.gz"),  emit: h3_binned_csv
+      path("${specieskey}.parquet"),                        emit: h3_binned
 
     script:
     def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
