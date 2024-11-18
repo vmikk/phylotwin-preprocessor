@@ -58,64 +58,33 @@ PRAGMA temp_directory='${TEMP_DIR}';
 "
 fi
 
-
 SQL_COMMAND+="
-
--- Function to process files in a directory
-CREATE OR REPLACE FUNCTION process_tsv_files(directory_path STRING) AS $$
-BEGIN
-    -- Create a temporary table to store all results
-    CREATE TEMP TABLE combined_data AS
-    SELECT 
-        H3Index,
-        OutlierScore,
-        regexp_replace(filename, '.*/(.*)\.[^.]*$', '\1') as source_file,
-        CAST(regexp_extract(regexp_replace(filename, '.*/(.*)\.[^.]*$', '\1'), '^([0-9]+)_', 1) AS BIGINT) as specieskey
-    FROM read_csv_auto(
-        (SELECT list_concat(list_transform(
-            glob(directory_path || '/*.txt.gz'),
-            x -> { 'file': x, 'format': 'tsv', 'header': false, 
-                   'columns': {'H3Index': 'VARCHAR', 'OutlierScore': 'DOUBLE'} }
-        ))),
-        filename=true
-    );
-
-    -- Write to parquet file
-    COPY (
-        SELECT 
-            specieskey,
-            H3Index,
-            OutlierScore
-        FROM combined_data
-        ORDER BY specieskey, H3Index
-    ) TO '${OUTPUT_FILE}' (FORMAT CSV, HEADER true, DELIMITER '\t', COMPRESSION 'gzip');
-
-    -- Generate and print summary statistics
-    SELECT 
-        COUNT(*) as total_records,
-        COUNT(*) FILTER (WHERE OutlierScore >= ${THRESHOLD}) as outliers,
-        COUNT(*) FILTER (WHERE OutlierScore < ${THRESHOLD}) as non_outliers,
-        MIN(OutlierScore) as min_score,
-        MAX(OutlierScore) as max_score,
-        AVG(OutlierScore) as avg_score
-    FROM combined_data;
-
-    -- Clean up
-    DROP TABLE combined_data;
-END;
-$$;
-
--- Execute the function
-CALL process_tsv_files('${INPUT_DIR}');
+CREATE TEMPORARY TABLE tbl AS SELECT * FROM read_csv('/dev/stdin',
+      auto_detect = false,
+      header = false,
+      delim = '\t',
+      columns = {
+        'SpeciesKey':   'BIGINT',
+        'H3Index':      'VARCHAR',
+        'OutlierScore': 'DOUBLE'
+      });
+     COPY tbl TO '${OUTPUT_FILE}' (HEADER, DELIMITER '\t', COMPRESSION 'gzip');
 "
 
-## Save the SQL command to a file
-echo -e "\nSaving SQL command to a file"
-echo "${SQL_COMMAND}" > "count_outliers.sql"
+## Function to add species key as the first column
+add_specieskey() {
+  zcat "$1" | awk -v id="$2" 'BEGIN { OFS="\t" } { print id, $0 }'
+}
+export -f add_specieskey
 
-## Execute the SQL command
-echo -e "\nExecuting DuckDB command"
-cat count_outliers.sql | duckdb
+## Process all files in the input directory
+find "${INPUT_DIR}" -name "*.txt.gz" \
+  | parallel \
+    -j 1 \
+    --rpl '{s} s:.*/::; s/_.*//' \
+    "add_specieskey {} {s}" \
+  | duckdb :memory: "${SQL_COMMAND}"
 
-echo -e "\nDone"
+echo -e "..Done\n"
+
 
