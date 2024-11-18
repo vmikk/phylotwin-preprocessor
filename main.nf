@@ -143,6 +143,32 @@ process prepare_species {
 }
 
 
+// Detect spatial outliers (per species) using DBSCAN
+process dbscan {
+    // cpus 2
+
+    tag "${specieskey}"
+
+    input:
+      tuple val(specieskey), path(h3_binned_csv)
+
+    output:
+      tuple val(specieskey), path("${specieskey}_DBSCAN-scores.txt"), emit: dbscan_scores
+
+    script:
+    """
+    echo -e "Detecting spatial outliers using DBSCAN\n"
+    echo "Species key: "    ${specieskey}
+
+    elki_outlier.sh \
+      --input  ${h3_binned_csv} \
+      --output ${specieskey}_DBSCAN-scores.txt \
+      --method DBSCANOutlierDetection \
+      --geomodel WGS84SpheroidEarthModel \
+      --indextype RStarTree \
+      --k ${params.dbscan_minpts} \
+      --d ${params.dbscan_eps}
+
     echo "..Done"
     """
 }
