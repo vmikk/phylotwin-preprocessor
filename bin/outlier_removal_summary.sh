@@ -1,5 +1,17 @@
 #!/bin/bash
 
+## Function to display usage information
+usage() {
+    echo "Usage: $0 -i INPUT_DIR [-q THRESHOLD] -o OUTPUT_FILE [-t THREADS] [-m MEMORY] [-x TEMP_DIR]"
+    echo "  -i INPUT_DIR      : Input Parquet file path"
+    echo "  -q THRESHOLD       : Outlier score threshold (default: 0.5) (optional)"
+    echo "  -o OUTPUT_FILE     : Output Parquet file path"
+    echo "  -t THREADS         : Number of CPU threads to use (optional)"
+    echo "  -m MEMORY          : Memory limit (e.g., '100GB') (optional)"
+    echo "  -x TEMP_DIR        : Temporary directory path (optional)"
+    exit 1
+}
+
 ## Initialize variables
 INPUT_DIR=""
 THRESHOLD="0.5"
