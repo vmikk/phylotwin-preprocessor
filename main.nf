@@ -249,6 +249,52 @@ process process_dbscan {
 
 
 
+// Filter and bin GBIF records to the H3 grid cells of final resolution
+process filter_and_bin {
+
+    tag "${name}"
+
+    input:
+      tuple val(name), path(occ), path(spp)
+
+    output:
+      path "${name}_filtered.parquet", emit: aggregated
+
+    script:
+    // Check if input is a directory (raw data for low-occurrence species)
+    // or a single parquet file (outlier-removed data for large-occurrence species)
+    def inp = occ.getName().endsWith('.parquet') ? occ : "${occ}'/*'"
+    
+    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
+    """
+    echo -e "Filtering and binning GBIF records\n"
+
+    echo "Species occurrences: " ${inp}
+    echo "Species keys: "        ${name}
+    echo "Output file: "         ${name}_filtered.parquet
+    echo "H3 resolution: "       ${params.h3_resolution}
+    if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
+    if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+
+    filter_and_bin.sh \
+      -i ${inp} \
+      -s ${spp} \
+      -o ${name}_filtered.parquet \
+      -r ${params.h3_resolution} \
+      -t ${task.cpus} \
+      "${memoryArg}" "${tempDirArg}" \
+      "${basisOfRecordArg}"
+
+    """
+}
+
+
+
+
+
+
 // Workflow
 workflow {
 
