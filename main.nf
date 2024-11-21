@@ -341,6 +341,26 @@ workflow {
     .combine(ch_occurrence_dir)
     .set { ch_dbscan_scores }
 
+  // Process DBSCAN results (remove grids marked as outliers)
+  process_dbscan(ch_dbscan_scores)
+
+  // Data for low-occurrence filtering   tuple( raw_data, low_occ_specieskeys )
+  ch_occurrence_dir
+    .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
+    .set { ch_spk_low }
+
+  // Data for large-occurrence filtering   tuple( outlier_removed_data, large_occ_specieskey )
+  ch_spk_large = process_dbscan.out.nooutliers
+  
+  ch_spk_low
+    .concat(ch_spk_large)
+    .set { ch_spk }
+
+  // Filter and bin occurrences
+  filter_and_bin(ch_spk)
+
+}
+
 
 // On completion
 workflow.onComplete {
