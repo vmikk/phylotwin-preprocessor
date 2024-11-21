@@ -332,6 +332,15 @@ workflow {
   // Prepare data for spatial outlier removal (large species only)
   prepare_species(ch_large_species)
 
+  // Remove spatial outliers using DBSCAN
+  dbscan(prepare_species.out.h3_binned_csv)
+
+  // Add raw occurrence path to the channel with DBSCAN scores
+  // tuple(specieskey, dbscan_scores, occurrence_path)
+  dbscan.out.dbscan_scores
+    .combine(ch_occurrence_dir)
+    .set { ch_dbscan_scores }
+
 
 // On completion
 workflow.onComplete {
