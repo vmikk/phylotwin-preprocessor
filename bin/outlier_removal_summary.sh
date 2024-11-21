@@ -115,3 +115,24 @@ find "${INPUT_DIR}" -name "*.txt.gz" \
 echo -e "..Done\n"
 
 
+
+SUMMARY_COMMAND=""
+## Add configuration settings (if provided)
+if [[ -n "$THREADS" ]]; then
+    SUMMARY_COMMAND+="
+SET threads TO ${THREADS};
+"
+fi
+
+if [[ -n "$MEMORY" ]]; then
+    SUMMARY_COMMAND+="
+SET memory_limit = '${MEMORY}';
+"
+fi
+
+if [[ -n "$TEMP_DIR" ]]; then
+    SUMMARY_COMMAND+="
+PRAGMA temp_directory='${TEMP_DIR}';
+"
+fi
+
