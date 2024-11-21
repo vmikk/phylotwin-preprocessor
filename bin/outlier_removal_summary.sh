@@ -33,9 +33,18 @@ while getopts "i:q:o:t:m:x:" opt; do
     esac
 done
 
+## Validate input parameters
+if [[ -z "$INPUT_DIR" || -z "$OUTPUT_FILE" ]]; then
+    echo -e "Error: Missing required parameters!\n"
+    usage
+fi
 
-## Start the SQL command
-echo -e "\nPreparing SQL command"
+## Threads should be a positive integer
+if [[ -n "$THREADS" && "$THREADS" -le 0 ]]; then
+    echo -e "Error: Threads must be a positive integer!\n"
+    usage
+fi
+
 
 SQL_COMMAND=""
 
