@@ -45,6 +45,24 @@ if [[ -n "$THREADS" && "$THREADS" -le 0 ]]; then
     usage
 fi
 
+echo -e "\nInput parameters:"
+echo "Input directory: $INPUT_DIR"
+echo "Outlier threshold: $THRESHOLD"
+echo "Output file: $OUTPUT_FILE"
+if [[ -n "$THREADS" ]]; then
+    echo "Threads: $THREADS"
+fi
+if [[ -n "$MEMORY" ]]; then
+    echo "Memory: $MEMORY"
+fi
+if [[ -n "$TEMP_DIR" ]]; then
+    echo "Temp directory: $TEMP_DIR"
+fi
+
+
+####################################### Merge outlier scores
+
+echo -e "\nMerging outlier scores\n"
 
 SQL_COMMAND=""
 
