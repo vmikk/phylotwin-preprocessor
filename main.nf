@@ -1,5 +1,21 @@
 #!/usr/bin/env nextflow
 
+// Usage:
+// nextflow run main.nf \
+//   -resume \
+//   --occurrences "gbif_occurrences/" \
+//   --outdir "gbif_occurrences_processed/" \
+//   --basis_of_record "PRESERVED_SPECIMEN,MATERIAL_CITATION,MACHINE_OBSERVATION"
+//   --t1 "./original_trees/" \
+//   --t2 "./processed_trees/" \
+//   --outlier_h3_resolution 6 \
+//   --outlier_occurrence_threshold 100 \
+//   --dbscan_minpts 3 \
+//   --dbscan_eps 1000000 \
+//   --h3_resolution 4 \
+//   --userid "user"
+
+
 // List of phylogenetic trees
 // NB. taxon names (first element of tuple) should be unique
 phylo_trees = [
