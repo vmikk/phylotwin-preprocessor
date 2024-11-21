@@ -17,8 +17,16 @@
 #   --indextype RStarTree \
 #   --k 5
 
-## Path to ELKI
-ELKI="${HOME}/bin/elki-bundle-0.8.0.jar"
+## Path to ELKI - try multiple locations
+if [ -f "/usr/local/bin/elki-bundle-0.8.0.jar" ]; then
+    ELKI="/usr/local/bin/elki-bundle-0.8.0.jar"
+elif [ -f "${HOME}/bin/elki-bundle-0.8.0.jar" ]; then
+    ELKI="${HOME}/bin/elki-bundle-0.8.0.jar"
+else
+    echo "Error: Could not find ELKI jar file in either /usr/local/bin or ${HOME}/bin"
+    echo "Please ensure elki-bundle-0.8.0.jar is installed in one of these locations"
+    exit 1
+fi
 
 ## Parameters
 INPUT=""
