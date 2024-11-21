@@ -209,6 +209,45 @@ process dbscan {
     """
 }
 
+// Process DBSCAN results (remove grids marked as outliers)
+// NB. Scores from `DBSCANOutlierDetection` are binary!
+process process_dbscan {
+
+    tag "${specieskey}"
+
+    input:
+      tuple val(specieskey), path(dbscan_scores), path(occ)
+
+    output:
+      tuple val("${specieskey}"), path("${specieskey}.parquet"), path("${specieskey}.txt"), emit: nooutliers
+
+    script:
+    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
+    """
+    echo -e "Processing DBSCAN results\n"
+    echo "Species key: " ${specieskey}
+    if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
+    if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+
+    remove_outliers_from_parquet.sh \
+      -i ${occ}'/*' \
+      -w ${dbscan_scores} \
+      -r ${params.outlier_h3_resolution} \
+      -o ${specieskey}.parquet \
+      -s ${specieskey} \
+      -t ${task.cpus} \
+      "${memoryArg}" "${tempDirArg}" \
+      "${basisOfRecordArg}"
+
+    ## For compatibility with low-occurrence species, we need a file with species keys
+    echo ${specieskey} > "${specieskey}.txt"
+
+    """
+}
+
+
 
 // Workflow
 workflow {
