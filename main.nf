@@ -177,7 +177,7 @@ process dbscan {
       tuple val(specieskey), path(h3_binned_csv)
 
     output:
-      tuple val(specieskey), path("${specieskey}_DBSCAN-scores.txt"), emit: dbscan_scores
+      tuple val(specieskey), path("${specieskey}_DBSCAN-outliers.txt.gz"), emit: dbscan_scores
 
     script:
     """
@@ -186,12 +186,24 @@ process dbscan {
 
     elki_outlier.sh \
       --input  ${h3_binned_csv} \
-      --output ${specieskey}_DBSCAN-scores.txt \
+      --output ${specieskey}_DBSCAN-scores.txt.gz \
       --method DBSCANOutlierDetection \
       --geomodel WGS84SpheroidEarthModel \
       --indextype RStarTree \
       --k ${params.dbscan_minpts} \
       --d ${params.dbscan_eps}
+
+    echo "ELKI finished"
+    echo "Merging H3 cell IDs and scores"
+
+    ## Merge H3 cell IDs and scores
+    paste \
+      <(zcat "${h3_binned_csv}" | cut -d',' -f3) \
+      <(zcat "${specieskey}_DBSCAN-scores.txt.gz" | cut -d' ' -f2) \
+      | gzip -3 \
+      > "${specieskey}_DBSCAN-outliers.txt.gz"
+
+    rm "${specieskey}_DBSCAN-scores.txt.gz"
 
     echo "..Done"
     """
