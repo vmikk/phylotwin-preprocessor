@@ -24,3 +24,51 @@ BASIS_OF_RECORD=""
 THREADS=""
 MEMORY=""
 TEMP_DIR=""
+
+## Validate input parameters
+if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$OUTLIER_SCORES" || -z "$SPECIES_KEY" ]]; then
+    echo -e "Error: Missing required parameters!\n"
+    usage
+fi
+
+if ! [[ "$H3_RESOLUTION" =~ ^[0-9]+$ ]] || [ "$H3_RESOLUTION" -lt 0 ] || [ "$H3_RESOLUTION" -gt 15 ]; then
+    echo -e "Error: H3 resolution must be an integer between 0 and 15!\n"
+    usage
+fi
+
+if ! [[ "$SPECIES_KEY" =~ ^[0-9]+$ ]]; then
+    echo -e "Error: Species key must be a positive integer!\n"
+    usage
+fi
+
+## Threads should be a positive integer
+if [[ -n "$THREADS" && "$THREADS" -le 0 ]]; then
+    echo -e "Error: Threads must be a positive integer!\n"
+    usage
+fi
+
+## `BASIS_OF_RECORD` should be a comma-separated list of valid values
+VALID_BOR=(\
+  "OBSERVATION" "OCCURRENCE" "MACHINE_OBSERVATION" "MATERIAL_SAMPLE" \
+  "HUMAN_OBSERVATION" "MATERIAL_CITATION" "PRESERVED_SPECIMEN" \
+  "FOSSIL_SPECIMEN" "LIVING_SPECIMEN")
+
+if [[ -n "${BASIS_OF_RECORD}" ]]; then
+    
+    ## Split values into array
+    ## NB! `read -a` works in bash, but not in zsh (in zsh, use `read -A`)
+    IFS=',' read -r -a BOR <<< "${BASIS_OF_RECORD}"
+    
+    # Debug output
+    # echo "Received values: ${BOR[@]}"
+        
+    ## Check each value
+    for value in "${BOR[@]}"; do
+        if [[ ! " ${VALID_BOR[@]} " =~ " ${value} " ]]; then
+            echo "Error: Invalid basis of record value '${value}'"
+            echo "Supported values are: ${VALID_BOR[*]}"
+            exit 1
+        fi
+    done
+fi
+
