@@ -18,7 +18,7 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR]"
+    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR]"
     echo "  -i INPUT_FILE      : Input Parquet file path"
     echo "  -o OUTPUT_FILE     : Output Parquet file path"
     echo "  -r H3_RESOLUTION   : H3 resolution (0-15)"
@@ -27,6 +27,7 @@ usage() {
     echo "  -t THREADS         : Number of CPU threads to use (optional)"
     echo "  -m MEMORY          : Memory limit (e.g., '100GB') (optional)"
     echo "  -x TEMP_DIR        : Temporary directory path (optional)"
+    echo "  -e EXT_DIR         : DuckDB extensions directory path (optional)"
     exit 1
 }
 
@@ -39,9 +40,10 @@ BASIS_OF_RECORD=""
 THREADS=""
 MEMORY=""
 TEMP_DIR=""
+EXT_DIR=""
 
 ## Parse command-line options
-while getopts "i:o:r:s:b:t:m:x" opt; do
+while getopts "i:o:r:s:b:t:m:x:e:" opt; do
     case $opt in
         i) INPUT_FILE="$OPTARG" ;;
         o) OUTPUT_FILE="$OPTARG" ;;
@@ -51,6 +53,7 @@ while getopts "i:o:r:s:b:t:m:x" opt; do
         t) THREADS="$OPTARG" ;;
         m) MEMORY="$OPTARG" ;;
         x) TEMP_DIR="$OPTARG" ;;
+        e) EXT_DIR="$OPTARG" ;;
         *) usage ;;
     esac
 done
@@ -122,6 +125,9 @@ fi
 if [[ -n "$TEMP_DIR" ]]; then
     echo "Temp directory: $TEMP_DIR"
 fi
+if [[ -n "$EXT_DIR" ]]; then
+    echo "DuckDB extensions directory: $EXT_DIR"
+fi
 
 ## Start the SQL command
 echo -e "\nPreparing SQL command"
@@ -147,11 +153,16 @@ PRAGMA temp_directory='${TEMP_DIR}';
 "
 fi
 
+if [[ -n "$EXT_DIR" ]]; then
+    SQL_COMMAND+="
+SET extension_directory='${EXT_DIR}';
+"
+fi
 
 SQL_COMMAND+="
 
 -- Install and load the H3 extension
-INSTALL h3 FROM community;
+-- INSTALL h3 FROM community;
 LOAD h3;
 
 -- Create a table containing species keys of interest
