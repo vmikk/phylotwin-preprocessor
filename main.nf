@@ -209,6 +209,31 @@ process dbscan {
     """
 }
 
+
+// Count number of grid cells identified as outliers
+process count_outliers {
+
+  publishDir "${OUT_2_OUT}", mode: "${params.publish_dir_mode}"
+
+  input:
+    path(outlier_scores, stageAs: "scores/*")
+
+  output:
+    path("outlier_summary.txt.gz"), emit: outlier_summary
+
+  script:
+  """
+  echo -e "Outlier removal summary\n"
+
+  outlier_removal_summary.sh \
+    -i scores \
+    -o outlier_summary.txt.gz \
+    -q 0.5 -t 2
+
+  """
+}
+
+
 // Process DBSCAN results (remove grids marked as outliers)
 // NB. Scores from `DBSCANOutlierDetection` are binary!
 process process_dbscan {
