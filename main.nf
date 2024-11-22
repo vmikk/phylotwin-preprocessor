@@ -293,6 +293,7 @@ process filter_and_bin {
     def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
     def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
+    def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
     """
     echo -e "Filtering and binning GBIF records\n"
 
@@ -302,6 +303,7 @@ process filter_and_bin {
     echo "H3 resolution: "       ${params.h3_resolution}
     if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
     if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+    echo "Container engine: "    ${workflow.containerEngine}
 
     filter_and_bin.sh \
       -i ${inp} \
@@ -309,8 +311,9 @@ process filter_and_bin {
       -o ${name}_filtered.parquet \
       -r ${params.h3_resolution} \
       -t ${task.cpus} \
-      "${memoryArg}" "${tempDirArg}" \
-      "${basisOfRecordArg}"
+      ${memoryArg} ${tempDirArg} \
+      ${basisOfRecordArg} \
+      ${duckdbArg}
 
     """
 }
