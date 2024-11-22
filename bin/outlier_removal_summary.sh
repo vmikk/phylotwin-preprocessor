@@ -1,5 +1,12 @@
 #!/bin/bash
 
+## Outlier removal summary
+# outlier_removal_summary.sh \
+#   -i scores/ \
+#   -o outlier_summary.txt.gz \
+#   -q 0.5 -t 2
+
+
 ## Function to display usage information
 usage() {
     echo "Usage: $0 -i INPUT_DIR [-q THRESHOLD] -o OUTPUT_FILE [-t THREADS] [-m MEMORY] [-x TEMP_DIR]"
