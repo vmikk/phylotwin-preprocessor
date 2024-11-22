@@ -369,6 +369,14 @@ workflow {
   // Process DBSCAN results (remove grids marked as outliers)
   process_dbscan(ch_dbscan_scores)
 
+  // Outlier removal summary
+  dbscan.out.dbscan_scores
+    .map { it -> it[1] }
+    .collect()
+    .set { ch_all_scores }
+ 
+  count_outliers(ch_all_scores)
+
   // Data for low-occurrence filtering   tuple( raw_data, low_occ_specieskeys )
   ch_occurrence_dir
     .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
