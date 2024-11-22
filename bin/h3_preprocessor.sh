@@ -17,16 +17,7 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-d] [-c]"
-    echo "  -i INPUT_FILE    : Input Parquet file path"
-    echo "  -o OUTPUT_FILE   : Output Parquet file path"
-    echo "  -r H3_RESOLUTION : H3 resolution (0-15)"
-    echo "  -s SPECIES_KEY   : Species key for filtering"
-    echo "  -t THREADS       : Number of CPU threads to use (optional)"
-    echo "  -m MEMORY        : Memory limit (e.g., '100GB') (optional)"
-    echo "  -x TEMP_DIR      : Temporary directory path (optional)"
-    echo "  -d               : Save SQL script for debugging (optional, default: true)"
-    echo "  -c               : Convert Parquet output to CSV (optional, default: true)"
+    echo "  -b BASIS_OF_RECORD : Comma-separated list of basis of record values to include (optional)"
     exit 1
 }
 
@@ -35,6 +26,7 @@ INPUT_FILE=""
 OUTPUT_FILE=""
 H3_RESOLUTION=""
 SPECIES_KEY=""
+BASIS_OF_RECORD=""
 THREADS=""
 MEMORY=""
 TEMP_DIR=""
@@ -48,6 +40,7 @@ while getopts "i:o:r:s:t:m:x:dc" opt; do
         o) OUTPUT_FILE="$OPTARG" ;;
         r) H3_RESOLUTION="$OPTARG" ;;
         s) SPECIES_KEY="$OPTARG" ;;
+        b) BASIS_OF_RECORD="$OPTARG" ;;
         t) THREADS="$OPTARG" ;;
         m) MEMORY="$OPTARG" ;;
         x) TEMP_DIR="$OPTARG" ;;
@@ -131,8 +124,16 @@ COPY (
                 specieskey
             FROM 
                 read_parquet('${INPUT_FILE}')
-            WHERE specieskey = ${SPECIES_KEY}
-        ),
+            WHERE specieskey = ${SPECIES_KEY}"
+
+# Add basis of record filter if specified
+if [[ -n "$BASIS_OF_RECORD" ]]; then
+    BASIS_LIST=$(echo "${BASIS_OF_RECORD}" | sed "s/,/','/g")
+    BASIS_LIST="'$BASIS_LIST'"
+    SQL_COMMAND+=" AND basisofrecord IN (${BASIS_LIST})"
+fi
+
+SQL_COMMAND+="),
         unique_grids AS (
             SELECT DISTINCT h3_index
             FROM inp
