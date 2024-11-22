@@ -17,14 +17,23 @@
 #   --indextype RStarTree \
 #   --k 5
 
-## Path to ELKI - try multiple locations
-if [ -f "/usr/local/bin/elki-bundle-0.8.0.jar" ]; then
-    ELKI="/usr/local/bin/elki-bundle-0.8.0.jar"
-elif [ -f "${HOME}/bin/elki-bundle-0.8.0.jar" ]; then
-    ELKI="${HOME}/bin/elki-bundle-0.8.0.jar"
+## NB!
+##  Every JVM creates a temporary performance instrumentation file in `/tmp/hsperfdata_<user>/<pid>`
+##  With Singularity, there could be PID collisions when running multiple instances of the same container
+##  --> use `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem` with Java
+
+## Path to ELKI
+# - check in PATH, /usr/local/bin, and ~/bin
+ELKI_JAR="elki-bundle-0.8.0.jar"
+if which "${ELKI_JAR}" >/dev/null 2>&1; then
+    ELKI=$(which "${ELKI_JAR}")
+elif [ -f "/usr/local/bin/${ELKI_JAR}" ]; then
+    ELKI="/usr/local/bin/${ELKI_JAR}"
+elif [ -f "${HOME}/bin/${ELKI_JAR}" ]; then
+    ELKI="${HOME}/bin/${ELKI_JAR}"
 else
-    echo "Error: Could not find ELKI jar file in either /usr/local/bin or ${HOME}/bin"
-    echo "Please ensure elki-bundle-0.8.0.jar is installed in one of these locations"
+    echo "Error: Could not find ${ELKI_JAR} in PATH, /usr/local/bin, or ${HOME}/bin"
+    echo "Please ensure ${ELKI_JAR} is installed in one of these locations"
     exit 1
 fi
 
