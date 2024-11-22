@@ -330,7 +330,9 @@ echo -e "\n"
 ## Run outlier detection
 echo -e "\nRunning outlier detection...\n"
 
-java -jar "${ELKI}" \
+java \
+  -XX:-UsePerfData \
+  -jar "${ELKI}" \
       KDDCLIApplication \
       $ALGORITHM_PARAMS \
       -algorithm.distancefunction geo.LatLngDistance \
