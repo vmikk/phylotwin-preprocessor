@@ -35,6 +35,11 @@ phylo_trees = [
 // GTDB_bac120_r220.tre.gz
 
 
+// Directory for publishing outputs
+OUTDIR = params.userid ? params.outdir + "/" + params.userid : params.outdir
+OUT_1_PRQ = OUTDIR + "/Filtered.parquet"   // Filtered and binned species occurrences
+OUT_2_OUT = OUTDIR + "/Outliers"           // Pre-binned species occurrences with outlier scores
+
 // Count number of occurrences per species
 process count_occurrences {
 
@@ -278,6 +283,7 @@ process process_dbscan {
 process filter_and_bin {
 
     tag "${name}"
+    publishDir "${OUT_1_PRQ}", mode: "${params.publish_dir_mode}"
 
     input:
       tuple val(name), path(occ), path(spp)
