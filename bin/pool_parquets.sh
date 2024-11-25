@@ -111,4 +111,4 @@ echo -e "\nExecuting DuckDB command"
 
 duckdb -c "${SQL_COMMAND}"
 
-
+echo -e "\nDone!"
