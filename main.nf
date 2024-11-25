@@ -255,6 +255,7 @@ process process_dbscan {
     def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
     def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
+    def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
     """
     echo -e "Processing DBSCAN results\n"
     echo "Species key: " ${specieskey}
@@ -268,8 +269,9 @@ process process_dbscan {
       -o ${specieskey}.parquet \
       -s ${specieskey} \
       -t ${task.cpus} \
-      "${memoryArg}" "${tempDirArg}" \
-      "${basisOfRecordArg}"
+      ${memoryArg} ${tempDirArg} \
+      ${basisOfRecordArg} \
+      ${duckdbArg}
 
     ## For compatibility with low-occurrence species, we need a file with species keys
     echo ${specieskey} > "${specieskey}.txt"
