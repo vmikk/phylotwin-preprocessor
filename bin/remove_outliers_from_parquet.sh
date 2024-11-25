@@ -9,6 +9,14 @@
 #   -s 2495667 \
 #   -b "PRESERVED_SPECIMEN,MATERIAL_CITATION,MACHINE_OBSERVATION"
 
+## NB!
+# - currently, only binary outlier scores are implemented
+#   (threshold is hard-coded to 0.5)
+
+## Main workflow:
+# - filter records using the `specieskey` column
+# - optionally filter records using the `basis_of_record` column
+# - exclude occurrences from H3 cell identified as outliers
 
 
 ## Function to display usage information
