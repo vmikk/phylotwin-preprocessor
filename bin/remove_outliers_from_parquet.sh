@@ -106,3 +106,108 @@ if [[ -n "${BASIS_OF_RECORD}" ]]; then
     done
 fi
 
+## Validate compression level
+if ! [[ "$COMPRESSION_LEVEL" =~ ^[0-9]+$ ]] || [ "$COMPRESSION_LEVEL" -lt 0 ] || [ "$COMPRESSION_LEVEL" -gt 22 ]; then
+    echo -e "Error: Compression level must be an integer between 0 and 22!\n"
+    usage
+fi
+
+## View user-supplied parameters
+echo -e "\nInput parameters:"
+echo "Input file: $INPUT_FILE"
+echo "Output file: $OUTPUT_FILE"
+echo "File with outlier scores: $OUTLIER_SCORES"
+echo "Species key: $SPECIES_KEY"
+if [[ -n "$BASIS_OF_RECORD" ]]; then
+    echo "Basis of record filter: $BASIS_OF_RECORD"
+fi
+if [[ -n "$THREADS" ]]; then
+    echo "Threads: $THREADS"
+fi
+if [[ -n "$MEMORY" ]]; then
+    echo "Memory: $MEMORY"
+fi
+if [[ -n "$TEMP_DIR" ]]; then
+    echo "Temp directory: $TEMP_DIR"
+fi
+if [[ -n "$EXT_DIR" ]]; then
+    echo "Extensions directory: $EXT_DIR"
+fi
+echo "Parquet compression level (ZSTD): $COMPRESSION_LEVEL"
+
+## Start the SQL command
+echo -e "\nPreparing SQL command"
+
+SQL_COMMAND=""
+
+## Add configuration settings (if provided)
+if [[ -n "$THREADS" ]]; then
+    SQL_COMMAND+="
+SET threads TO ${THREADS};
+"
+fi
+
+if [[ -n "$MEMORY" ]]; then
+    SQL_COMMAND+="
+SET memory_limit = '${MEMORY}';
+"
+fi
+
+if [[ -n "$TEMP_DIR" ]]; then
+    SQL_COMMAND+="
+PRAGMA temp_directory='${TEMP_DIR}';
+"
+fi
+
+if [[ -n "$EXT_DIR" ]]; then
+    SQL_COMMAND+="
+SET extension_directory='${EXT_DIR}';
+"
+fi
+
+SQL_COMMAND+="
+
+-- Install and load the H3 extension
+-- INSTALL h3 FROM community;
+LOAD h3;
+
+-- Load H3 grid cell IDs with outlier scores of interest
+CREATE TEMP TABLE outlier_scores AS 
+SELECT CAST(column0 AS VARCHAR) AS h3_index, CAST(column1 AS FLOAT) AS outlier_score 
+FROM read_csv('${OUTLIER_SCORES}', header=false, delim = '\t');
+
+-- Filter records and exclude outlier cells
+COPY (
+    WITH filtered_records AS (
+        SELECT 
+            *,
+            h3_latlng_to_cell_string(decimallatitude, decimallongitude, ${H3_RESOLUTION})::VARCHAR AS h3_index
+        FROM read_parquet('${INPUT_FILE}')
+        WHERE specieskey = ${SPECIES_KEY}"
+
+# Add basis of record filter if specified
+if [[ -n "$BASIS_OF_RECORD" ]]; then
+    BASIS_LIST=$(echo "${BASIS_OF_RECORD}" | sed "s/,/','/g")
+    BASIS_LIST="'$BASIS_LIST'"
+    SQL_COMMAND+=" AND basisofrecord IN (${BASIS_LIST})"
+fi
+
+SQL_COMMAND+="
+    )
+    SELECT r.* 
+    FROM filtered_records r
+    LEFT JOIN outlier_scores o ON r.h3_index = o.h3_index
+    WHERE o.outlier_score < 0.5 OR o.outlier_score IS NULL
+) TO '${OUTPUT_FILE}' (FORMAT 'parquet', COMPRESSION 'ZSTD', COMPRESSION_LEVEL ${COMPRESSION_LEVEL});
+"
+
+## Save the SQL command to a file
+echo -e "\nSaving SQL command to a file"
+SQL_SCRIPT_FILE="${OUTPUT_FILE/.parquet/}.sql"
+echo "${SQL_COMMAND}" > "$SQL_SCRIPT_FILE"
+
+## Execute the SQL command
+echo -e "\nExecuting DuckDB command"
+cat "${SQL_SCRIPT_FILE}" | duckdb
+
+echo -e "\nDone"
