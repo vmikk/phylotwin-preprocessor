@@ -18,8 +18,8 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR]"
-    echo "  -i INPUT_FILE      : Input Parquet file path"
+    echo "Usage: $0 -i INPUT -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR]"
+    echo "  -i INPUT           : Input Parquet file or directory path"
     echo "  -o OUTPUT_FILE     : Output Parquet file path"
     echo "  -r H3_RESOLUTION   : H3 resolution (0-15)"
     echo "  -s spkeys.txt      : Text file with species keys (one per line)"
@@ -32,7 +32,7 @@ usage() {
 }
 
 ## Initialize variables
-INPUT_FILE=""
+INPUT=""
 OUTPUT_FILE=""
 H3_RESOLUTION=""
 SPECIES_KEYS=""
@@ -45,7 +45,7 @@ EXT_DIR=""
 ## Parse command-line options
 while getopts "i:o:r:s:b:t:m:x:e:" opt; do
     case $opt in
-        i) INPUT_FILE="$OPTARG" ;;
+        i) INPUT="$OPTARG" ;;
         o) OUTPUT_FILE="$OPTARG" ;;
         r) H3_RESOLUTION="$OPTARG" ;;
         s) SPECIES_KEYS="$OPTARG" ;;
@@ -59,7 +59,7 @@ while getopts "i:o:r:s:b:t:m:x:e:" opt; do
 done
 
 ## Validate input parameters
-if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$H3_RESOLUTION" || -z "$SPECIES_KEYS" ]]; then
+if [[ -z "$INPUT" || -z "$OUTPUT_FILE" || -z "$H3_RESOLUTION" || -z "$SPECIES_KEYS" ]]; then
     echo -e "Error: Missing required parameters!\n"
     usage
 fi
@@ -107,7 +107,7 @@ fi
 
 ## View user-supplied parameters
 echo -e "\nInput parameters:"
-echo "Input file: $INPUT_FILE"
+echo "Input: $INPUT"
 echo "Output file: $OUTPUT_FILE"
 echo "H3 resolution: $H3_RESOLUTION"
 echo "File with species keys: $SPECIES_KEYS"
@@ -180,7 +180,7 @@ COPY (
                 specieskey,
                 year
             FROM 
-                read_parquet('${INPUT_FILE}')
+                read_parquet('${INPUT}')
             WHERE specieskey IN (SELECT specieskey FROM species_keys) "
 
 # Add basis of record filter if specified
