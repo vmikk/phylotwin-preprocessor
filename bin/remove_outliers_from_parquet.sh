@@ -32,11 +32,32 @@ usage() {
 INPUT_FILE=""
 OUTPUT_FILE=""
 OUTLIER_SCORES=""
+H3_RESOLUTION=""
 SPECIES_KEY=""
 BASIS_OF_RECORD=""
 THREADS=""
 MEMORY=""
 TEMP_DIR=""
+EXT_DIR=""
+COMPRESSION_LEVEL="10"
+
+## Parse command-line options
+while getopts "i:o:w:r:s:b:t:m:x:e:z:" opt; do
+    case $opt in
+        i) INPUT_FILE="$OPTARG" ;;
+        o) OUTPUT_FILE="$OPTARG" ;;
+        w) OUTLIER_SCORES="$OPTARG" ;;
+        r) H3_RESOLUTION="$OPTARG" ;;
+        s) SPECIES_KEY="$OPTARG" ;;
+        b) BASIS_OF_RECORD="$OPTARG" ;;
+        t) THREADS="$OPTARG" ;;
+        m) MEMORY="$OPTARG" ;;
+        x) TEMP_DIR="$OPTARG" ;;
+        e) EXT_DIR="$OPTARG" ;;
+        z) COMPRESSION_LEVEL="$OPTARG" ;;
+        *) usage ;;
+    esac
+done
 
 ## Validate input parameters
 if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$OUTLIER_SCORES" || -z "$SPECIES_KEY" ]]; then
