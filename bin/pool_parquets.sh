@@ -11,12 +11,13 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT -o OUTPUT [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR]"
+    echo "Usage: $0 -i INPUT -o OUTPUT [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-z COMPRESSION]"
     echo "  -i INPUT      : Input directory with Parquet files"
     echo "  -o OUTPUT     : Output Parquet file path"
     echo "  -t THREADS    : Number of CPU threads to use (optional)"
     echo "  -m MEMORY     : Memory limit (e.g., '100GB') (optional)"
     echo "  -x TEMP_DIR   : Temporary directory path (optional)"
+    echo "  -z COMPRESSION: ZSTD compression level (0-22) (optional, default: 14)"
     exit 1
 }
 
@@ -26,15 +27,17 @@ OUTPUT=""
 THREADS=""
 MEMORY=""
 TEMP_DIR=""
+COMPRESSION="14"
 
 ## Parse command-line options
-while getopts "i:o:t:m:x:" opt; do
+while getopts "i:o:t:m:x:z:" opt; do
     case $opt in
         i) INPUT="$OPTARG" ;;
         o) OUTPUT="$OPTARG" ;;
         t) THREADS="$OPTARG" ;;
         m) MEMORY="$OPTARG" ;;
         x) TEMP_DIR="$OPTARG" ;;
+        z) COMPRESSION="$OPTARG" ;;
         *) usage ;;
     esac
 done
@@ -52,6 +55,12 @@ if [[ -n "$THREADS" && "$THREADS" -le 0 ]]; then
     usage
 fi
 
+## Validate compression level
+if ! [[ "$COMPRESSION" =~ ^[0-9]+$ ]] || [ "$COMPRESSION" -lt 0 ] || [ "$COMPRESSION" -gt 22 ]; then
+    echo -e "Error: Compression level must be an integer between 0 and 22!\n"
+    usage
+fi
+
 ## View user-supplied parameters
 echo -e "\nInput parameters:"
 echo "Input directory: $INPUT"
@@ -65,6 +74,7 @@ fi
 if [[ -n "$TEMP_DIR" ]]; then
     echo "Temp directory: $TEMP_DIR"
 fi
+echo "Parquet compression level (ZSTD): $COMPRESSION"
 
 
 SQL_COMMAND=""
@@ -93,7 +103,7 @@ SQL_COMMAND+="
 COPY (
     SELECT * FROM read_parquet('${INPUT}/*.parquet')
 ) 
-TO '${OUTPUT}' (FORMAT PARQUET, COMPRESSION 'ZSTD', COMPRESSION_LEVEL 14, ROW_GROUP_SIZE 200000, ROW_GROUPS_PER_FILE 1);
+TO '${OUTPUT}' (FORMAT PARQUET, COMPRESSION 'ZSTD', COMPRESSION_LEVEL ${COMPRESSION}, ROW_GROUP_SIZE 300000, ROW_GROUPS_PER_FILE 1);
 "
 
 ## Execute the SQL command
