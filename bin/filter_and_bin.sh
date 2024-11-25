@@ -203,7 +203,7 @@ SQL_COMMAND+="),
                 specieskey,
                 year,
                 COUNT(*) as record_count,
-                STRING_AGG(DISTINCT CAST(datasetkey AS VARCHAR), ',') as dataset_keys
+                LIST(DISTINCT datasetkey) as dataset_keys
             FROM inp
             WHERE h3_index IS NOT NULL
             GROUP BY h3_index, specieskey, year
