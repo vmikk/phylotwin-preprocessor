@@ -66,8 +66,8 @@ process count_occurrences {
       -i ${occurrences} \
       -o "Occurrences_counts.parquet" \
       -t ${task.cpus} \
-      "${memoryArg}" "${tempDirArg}" \
-      "${basisOfRecordArg}"
+      ${memoryArg} ${tempDirArg} \
+      ${basisOfRecordArg}
 
     echo "..Done"
     """
