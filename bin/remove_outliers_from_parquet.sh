@@ -1,5 +1,15 @@
 #!/bin/bash
 
+## Usage:
+# remove_outliers_from_parquet.sh \
+#   -i '/path/to/GBIF/dump/*' \
+#   -o '/path/to/output.parquet' \
+#   -w 'ELKI_outlier_scores.txt.gz' \
+#   -r 6 \
+#   -s 2495667 \
+#   -b "PRESERVED_SPECIMEN,MATERIAL_CITATION,MACHINE_OBSERVATION"
+
+
 
 ## Function to display usage information
 usage() {
