@@ -105,6 +105,12 @@ if [[ -n "${BASIS_OF_RECORD}" ]]; then
     done
 fi
 
+## Check if the input is a directory
+if [[ -d "$INPUT" ]]; then
+    echo -e "\n..Specified input is a directory, will process all parquet files in the directory"
+    INPUT="${INPUT}/*"
+fi
+
 ## View user-supplied parameters
 echo -e "\nInput parameters:"
 echo "Input: $INPUT"
