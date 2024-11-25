@@ -18,7 +18,7 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR]"
+    echo "Usage: $0 -i INPUT -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR] [-z COMPRESSION]"
     echo "  -i INPUT           : Input Parquet file or directory path"
     echo "  -o OUTPUT_FILE     : Output Parquet file path"
     echo "  -r H3_RESOLUTION   : H3 resolution (0-15)"
@@ -28,6 +28,7 @@ usage() {
     echo "  -m MEMORY          : Memory limit (e.g., '100GB') (optional)"
     echo "  -x TEMP_DIR        : Temporary directory path (optional)"
     echo "  -e EXT_DIR         : DuckDB extensions directory path (optional)"
+    echo "  -z COMPRESSION     : ZSTD compression level (0-22) (optional, default: 10)"
     exit 1
 }
 
@@ -41,9 +42,10 @@ THREADS=""
 MEMORY=""
 TEMP_DIR=""
 EXT_DIR=""
+COMPRESSION_LEVEL="10"
 
 ## Parse command-line options
-while getopts "i:o:r:s:b:t:m:x:e:" opt; do
+while getopts "i:o:r:s:b:t:m:x:e:z:" opt; do
     case $opt in
         i) INPUT="$OPTARG" ;;
         o) OUTPUT_FILE="$OPTARG" ;;
@@ -54,6 +56,7 @@ while getopts "i:o:r:s:b:t:m:x:e:" opt; do
         m) MEMORY="$OPTARG" ;;
         x) TEMP_DIR="$OPTARG" ;;
         e) EXT_DIR="$OPTARG" ;;
+        z) COMPRESSION_LEVEL="$OPTARG" ;;
         *) usage ;;
     esac
 done
@@ -111,6 +114,12 @@ if [[ -d "$INPUT" ]]; then
     INPUT="${INPUT}/*"
 fi
 
+## Validate compression level
+if ! [[ "$COMPRESSION_LEVEL" =~ ^[0-9]+$ ]] || [ "$COMPRESSION_LEVEL" -lt 0 ] || [ "$COMPRESSION_LEVEL" -gt 22 ]; then
+    echo -e "Error: Compression level must be an integer between 0 and 22!\n"
+    usage
+fi
+
 ## View user-supplied parameters
 echo -e "\nInput parameters:"
 echo "Input: $INPUT"
@@ -134,6 +143,7 @@ fi
 if [[ -n "$EXT_DIR" ]]; then
     echo "DuckDB extensions directory: $EXT_DIR"
 fi
+echo "Parquet compression level (ZSTD): $COMPRESSION_LEVEL"
 
 ## Start the SQL command
 echo -e "\nPreparing SQL command"
@@ -219,7 +229,7 @@ SQL_COMMAND+="),
         )
 
     SELECT * FROM aggregated_data
-) TO '${OUTPUT_FILE}' (FORMAT 'parquet', COMPRESSION 'ZSTD', COMPRESSION_LEVEL 14);
+) TO '${OUTPUT_FILE}' (FORMAT 'parquet', COMPRESSION 'ZSTD', COMPRESSION_LEVEL ${COMPRESSION_LEVEL});
 "
 
 ## Save the SQL command to a file
