@@ -13,15 +13,18 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR]"
+    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -w OUTLIER_SCORES -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR] [-z COMPRESSION]"
     echo "  -i INPUT_FILE      : Input Parquet file path"
     echo "  -o OUTPUT_FILE     : Output Parquet file path"
     echo "  -w OUTLIER_SCORES  : Tab-delimited file with H3 cell IDs and outlier scores"
+    echo "  -r H3_RESOLUTION   : H3 resolution (0-15)"
     echo "  -s SPECIESKEY      : Species key for filtering"
     echo "  -b BASIS_OF_RECORD : Comma-separated list of basis of record values to include (optional)"
     echo "  -t THREADS         : Number of CPU threads to use (optional)"
     echo "  -m MEMORY          : Memory limit (e.g., '100GB') (optional)"
     echo "  -x TEMP_DIR        : Temporary directory path (optional)"
+    echo "  -e EXT_DIR         : DuckDB extensions directory path (optional)"
+    echo "  -z COMPRESSION     : ZSTD compression level (0-22) (optional, default: 10)"
     exit 1
 }
 
