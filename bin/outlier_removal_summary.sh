@@ -122,6 +122,9 @@ find "${INPUT_DIR}" -name "*.txt.gz" \
 echo -e "..Done\n"
 
 
+####################################### Outlier summary
+
+echo -e "\nOutlier summary\n"
 
 SUMMARY_COMMAND=""
 ## Add configuration settings (if provided)
@@ -143,3 +146,42 @@ PRAGMA temp_directory='${TEMP_DIR}';
 "
 fi
 
+SUMMARY_COMMAND+="
+
+-- Reading the combined outlier scores
+CREATE TABLE inp AS SELECT * FROM read_csv('${OUTPUT_FILE}', delim = '\t', header = true);
+
+-- Overall summary
+SELECT 
+    COUNT(*) AS total_records,
+    COUNT(DISTINCT H3Index) AS unique_h3_cells,
+    COUNT(DISTINCT SpeciesKey) AS unique_species
+FROM inp;
+
+-- Total number of grid cells considered as outliers
+SELECT COUNT(*) AS total_outliers
+FROM inp
+WHERE OutlierScore > ${THRESHOLD};
+
+-- Average number of outliers per species
+SELECT AVG(column_count) AS avg_outliers_per_species
+FROM (
+    SELECT SpeciesKey, COUNT(*) AS column_count
+    FROM inp
+    WHERE OutlierScore > ${THRESHOLD}
+    GROUP BY SpeciesKey
+);
+
+-- Summary Statistics for OutlierScore
+SELECT
+    MIN(OutlierScore) AS min_value,
+    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY OutlierScore) AS Q1,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY OutlierScore) AS median,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY OutlierScore) AS Q3,
+    MAX(OutlierScore) AS max_value
+FROM inp;
+"
+
+duckdb -c "${SUMMARY_COMMAND}"
+
+echo -e "..Done\n"
