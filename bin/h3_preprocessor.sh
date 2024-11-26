@@ -2,6 +2,9 @@
 
 ## Script to prepare data for spatial outlier detection with ELKI
 
+## Output format:
+# LAT, LON, H3
+
 ## Usage:
 # ./h3_preprocessor.sh \
 #   -i '/path/to/GBIF/dump/*' \
@@ -11,6 +14,7 @@
 
 ## Main workflow:
 # - filter records using the `specieskey` column
+# - optionally filter records using the `basis_of_record` column
 # - convert latitude/longitude coordinates to H3 cells
 # - keep unique H3 grids
 # - estimate the centroid of H3 grids
