@@ -3,7 +3,7 @@
 ## Outlier removal summary
 # outlier_removal_summary.sh \
 #   -i scores/ \
-#   -o outlier_summary.txt.gz \
+#   -o outlier_scores.txt.gz \
 #   -q 0.5 -t 2
 
 
@@ -149,37 +149,70 @@ fi
 SUMMARY_COMMAND+="
 
 -- Reading the combined outlier scores
-CREATE TABLE inp AS SELECT * FROM read_csv('${OUTPUT_FILE}', delim = '\t', header = true);
+CREATE TABLE inp AS SELECT * FROM read_csv('${OUTPUT_FILE}', 
+      auto_detect = false,
+      delim = '\t', 
+      header = true,
+      columns = {
+        'SpeciesKey':   'BIGINT',
+        'H3Index':      'VARCHAR',
+        'OutlierScore': 'DOUBLE'
+      });
 
--- Overall summary
-SELECT 
-    COUNT(*) AS total_records,
-    COUNT(DISTINCT H3Index) AS unique_h3_cells,
-    COUNT(DISTINCT SpeciesKey) AS unique_species
-FROM inp;
+-- Create a table with summary statistics in long format
+CREATE TEMP TABLE summary AS (
 
--- Total number of grid cells considered as outliers
-SELECT COUNT(*) AS total_outliers
-FROM inp
-WHERE OutlierScore > ${THRESHOLD};
+    -- Overall summary
+    SELECT 'Total_records' as Variable, CAST(COUNT(*) AS VARCHAR) as Value
+    FROM inp
+    UNION ALL
+    SELECT 'Unique_H3_cells', CAST(COUNT(DISTINCT H3Index) AS VARCHAR)
+    FROM inp
+    UNION ALL
+    SELECT 'Unique_species', CAST(COUNT(DISTINCT SpeciesKey) AS VARCHAR)
+    FROM inp
+    UNION ALL
 
--- Average number of outliers per species
-SELECT AVG(column_count) AS avg_outliers_per_species
-FROM (
-    SELECT SpeciesKey, COUNT(*) AS column_count
+    -- Total Outliers
+    SELECT 'Total_outliers', CAST(COUNT(*) AS VARCHAR)
     FROM inp
     WHERE OutlierScore > ${THRESHOLD}
-    GROUP BY SpeciesKey
+    UNION ALL
+
+    -- Average number of outliers per species
+    SELECT 'Average_number_of_outliers_per_species', CAST(ROUND(AVG(column_count), 3) AS VARCHAR)
+    FROM (
+        SELECT SpeciesKey, COUNT(*) AS column_count
+        FROM inp
+        WHERE OutlierScore > ${THRESHOLD}
+        GROUP BY SpeciesKey
+    ) t
+    UNION ALL
+
+    -- Score statistics
+    SELECT 'Minimum_outlier_score', CAST(MIN(OutlierScore) AS VARCHAR)
+    FROM inp
+    UNION ALL
+    SELECT 'Q1_outlier_score', CAST(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY OutlierScore) AS VARCHAR)
+    FROM inp
+    UNION ALL
+    SELECT 'Median_outlier_score', CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY OutlierScore) AS VARCHAR)
+    FROM inp
+    UNION ALL
+    SELECT 'Q3_outlier_score', CAST(PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY OutlierScore) AS VARCHAR)
+    FROM inp
+    UNION ALL
+    SELECT 'Maximum_outlier_score', CAST(MAX(OutlierScore) AS VARCHAR)
+    FROM inp
 );
 
--- Summary Statistics for OutlierScore
-SELECT
-    MIN(OutlierScore) AS min_value,
-    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY OutlierScore) AS Q1,
-    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY OutlierScore) AS median,
-    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY OutlierScore) AS Q3,
-    MAX(OutlierScore) AS max_value
-FROM inp;
+-- Output both to file and console
+COPY (
+    SELECT * FROM summary
+) TO '${OUTPUT_FILE%.txt.gz}_summary.txt' (HEADER, DELIMITER '\t');
+
+-- Also display to console
+SELECT * FROM summary;
 "
 
 duckdb -c "${SUMMARY_COMMAND}"
