@@ -32,6 +32,7 @@ usage() {
     echo "  -x TEMP_DIR        : Temporary directory path (optional)"
     echo "  -d                 : Save SQL script for debugging (optional, default: true)"
     echo "  -c                 : Convert Parquet output to CSV (optional, default: true)"
+    echo "  -e EXT_DIR         : DuckDB extensions directory path (optional)"
     echo "  -z COMPRESSION     : ZSTD compression level (0-22) (optional, default: 10)"
     exit 1
 }
@@ -47,6 +48,7 @@ MEMORY=""
 TEMP_DIR=""
 SAVE_SQL_SCRIPT=true
 CONVERT_TO_CSV=true
+EXT_DIR=""
 COMPRESSION_LEVEL="10"
 
 ## Parse command-line options
@@ -62,6 +64,7 @@ while getopts "i:o:r:s:b:t:m:x:e:dcz:" opt; do
         x) TEMP_DIR="$OPTARG" ;;
         d) SAVE_SQL_SCRIPT=true ;;
         c) CONVERT_TO_CSV=true ;;
+        e) EXT_DIR="$OPTARG" ;;
         z) COMPRESSION_LEVEL="$OPTARG" ;;
         *) usage ;;
     esac
@@ -138,6 +141,9 @@ fi
 if [[ -n "$TEMP_DIR" ]]; then
     echo "Temp directory: $TEMP_DIR"
 fi
+if [[ -n "$EXT_DIR" ]]; then
+    echo "DuckDB extensions directory: $EXT_DIR"
+fi
 echo "Parquet compression level (ZSTD): $COMPRESSION_LEVEL"
 
 ## Start the SQL command
@@ -164,13 +170,19 @@ PRAGMA temp_directory='${TEMP_DIR}';
 "
 fi
 
+if [[ -n "$EXT_DIR" ]]; then
+    SQL_COMMAND+="
+SET extension_directory='${EXT_DIR}';
+"
+fi
 
 SQL_COMMAND+="
 
 -- Install and load the H3 extension
-INSTALL h3 FROM community;
+-- INSTALL h3 FROM community;
 LOAD h3;
 
+-- Main query
 COPY (
     WITH
         inp AS (
