@@ -54,6 +54,10 @@ cat > "${JSON}" <<EOT
                 "value": "false"
             },
             {
+                "type": "isNotNull",
+                "key": "YEAR"
+            },
+            {
                 "type": "not",
                 "predicate": {
                     "type": "in",
