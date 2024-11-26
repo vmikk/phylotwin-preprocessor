@@ -129,6 +129,9 @@ echo "Input file: $INPUT_FILE"
 echo "Output file: $OUTPUT_FILE"
 echo "H3 resolution: $H3_RESOLUTION"
 echo "Species key: $SPECIES_KEY"
+if [[ -n "$BASIS_OF_RECORD" ]]; then
+    echo "Basis of record filter: $BASIS_OF_RECORD"
+fi
 echo "Save SQL script: $SAVE_SQL_SCRIPT"
 echo "Convert output to CSV: $CONVERT_TO_CSV"
 
