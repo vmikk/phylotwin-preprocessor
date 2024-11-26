@@ -71,6 +71,8 @@ fi
 
 echo -e "\nMerging outlier scores\n"
 
+echo -e "..Number of files found: " $(find "${INPUT_DIR}" -name "*.txt.gz" | wc -l) "\n"
+
 SQL_COMMAND=""
 
 ## Add configuration settings (if provided)
