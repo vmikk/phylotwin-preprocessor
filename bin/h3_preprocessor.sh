@@ -21,7 +21,18 @@
 
 ## Function to display usage information
 usage() {
+    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-d] [-c] [-e EXT_DIR] [-z COMPRESSION]"
+    echo "  -i INPUT_FILE      : Input Parquet file path"
+    echo "  -o OUTPUT_FILE     : Output Parquet file path"
+    echo "  -r H3_RESOLUTION   : H3 resolution (0-15)"
+    echo "  -s SPECIES_KEY     : Species key for filtering"
     echo "  -b BASIS_OF_RECORD : Comma-separated list of basis of record values to include (optional)"
+    echo "  -t THREADS         : Number of CPU threads to use (optional)"
+    echo "  -m MEMORY          : Memory limit (e.g., '100GB') (optional)"
+    echo "  -x TEMP_DIR        : Temporary directory path (optional)"
+    echo "  -d                 : Save SQL script for debugging (optional, default: true)"
+    echo "  -c                 : Convert Parquet output to CSV (optional, default: true)"
+    echo "  -z COMPRESSION     : ZSTD compression level (0-22) (optional, default: 10)"
     exit 1
 }
 
@@ -36,9 +47,10 @@ MEMORY=""
 TEMP_DIR=""
 SAVE_SQL_SCRIPT=true
 CONVERT_TO_CSV=true
+COMPRESSION_LEVEL="10"
 
 ## Parse command-line options
-while getopts "i:o:r:s:t:m:x:dc" opt; do
+while getopts "i:o:r:s:b:t:m:x:e:dcz:" opt; do
     case $opt in
         i) INPUT_FILE="$OPTARG" ;;
         o) OUTPUT_FILE="$OPTARG" ;;
@@ -50,6 +62,7 @@ while getopts "i:o:r:s:t:m:x:dc" opt; do
         x) TEMP_DIR="$OPTARG" ;;
         d) SAVE_SQL_SCRIPT=true ;;
         c) CONVERT_TO_CSV=true ;;
+        z) COMPRESSION_LEVEL="$OPTARG" ;;
         *) usage ;;
     esac
 done
@@ -101,6 +114,12 @@ if [[ -n "${BASIS_OF_RECORD}" ]]; then
     done
 fi
 
+## Validate compression level
+if ! [[ "$COMPRESSION_LEVEL" =~ ^[0-9]+$ ]] || [ "$COMPRESSION_LEVEL" -lt 0 ] || [ "$COMPRESSION_LEVEL" -gt 22 ]; then
+    echo -e "Error: Compression level must be an integer between 0 and 22!\n"
+    usage
+fi
+
 ## View user-supplied parameters
 echo -e "\nInput parameters:"
 echo "Input file: $INPUT_FILE"
@@ -119,6 +138,7 @@ fi
 if [[ -n "$TEMP_DIR" ]]; then
     echo "Temp directory: $TEMP_DIR"
 fi
+echo "Parquet compression level (ZSTD): $COMPRESSION_LEVEL"
 
 ## Start the SQL command
 echo -e "\nPreparing SQL command"
@@ -183,7 +203,7 @@ SQL_COMMAND+="),
         )
 
     SELECT * FROM grid_centroids
-) TO '${OUTPUT_FILE}' (FORMAT 'parquet', COMPRESSION 'ZSTD', COMPRESSION_LEVEL 14);
+) TO '${OUTPUT_FILE}' (FORMAT 'parquet', COMPRESSION 'ZSTD', COMPRESSION_LEVEL ${COMPRESSION_LEVEL});
 "
 
 ## Save the SQL command to a file (can be used for debugging)
