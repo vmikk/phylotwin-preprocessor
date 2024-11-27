@@ -37,7 +37,7 @@ phylo_trees = [
 
 // Directory for publishing outputs
 OUTDIR = params.userid ? params.outdir + "/" + params.userid : params.outdir
-OUT_1_PRQ = OUTDIR + "/Filtered.parquet"   // Filtered and binned species occurrences
+OUT_1_PRQ = OUTDIR + "/Filtered_parquet"   // Filtered and binned species occurrences
 OUT_2_OUT = OUTDIR + "/Outliers"           // Pre-binned species occurrences with outlier scores
 
 // Count number of occurrences per species
