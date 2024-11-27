@@ -114,21 +114,25 @@ process define_species_set {
 // Pool species lists from different taxonomic groups
 // In different trees, there might the same species (e.g., outgroup species or if trees overlap),
 // therefore, we need to keep them only once in the pooled species list
+// In addition, we can exclude extinct species
 process pool_species_lists {
 
     input:
       path(occurrence_counts, stageAs: "occ_counts/*")
+      path(extinct_taxa)
 
     output:
       path "Occurrences_large.txt", emit: occ_large
       path "Occurrences_small.txt", emit: occ_small
 
     script:
+    def extinctArg = extinct_taxa ? "--extinct ${extinct_taxa}" : ''
     """
     pool_occurrence_counts.R \
       --inpdir        occ_counts/ \
       --output_large  Occurrences_large.txt \
-      --output_small  Occurrences_small.txt
+      --output_small  Occurrences_small.txt \
+      ${extinctArg}
     """
 }
 
