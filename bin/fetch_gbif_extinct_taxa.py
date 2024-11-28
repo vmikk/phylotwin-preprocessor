@@ -41,7 +41,120 @@ class GBIFConfig:
     BATCH_SIZE: int = 1000
     MAX_OFFSET: int = 100_000
     HIGHER_TAXON_KEYS: List[str] = (
-        "359"  # Mammalia
+        
+        ##  Phylum Arthropoda (54)
+        "797",        # Lepidoptera
+        "1457",       # Hymenoptera
+        # "367",      # Arachnida
+        # "10713444", # Colembola
+        # "11545536", # Copepoda
+        # "361",      # Diplopoda
+        # "1470",     # Coleoptera
+        # "800",      # Blattodea
+        # "811",      # Diptera
+        # "809",      # Hemiptera
+
+        ##  Phylum Chordata (44)
+        "131",        # Amphibia
+        "11493978",   # Crocodylia
+        "212",        # Aves
+        "11592253",   # Squamata
+        "11418114",   # Testudines
+
+        # "359",      # Mammalia ------------------------------> too large
+        "731",        # Artiodactyla
+        "732",        # Carnivora
+        "733",        # Cetacea
+        "734",        # Chiroptera
+        "735",        # Cingulata
+        "736",        # Dasyuromorphia
+        "737",        # Dermoptera
+        "783",        # Didelphimorphia
+        "784",        # Hyracoidea
+        "785",        # Lagomorpha
+        "790",        # Microbiotheria
+        "791",        # Monotremata
+        "792",        # Paucituberculata
+        "794",        # Peramelemorphia
+        "795",        # Perissodactyla
+        "796",        # Pholidota
+        "798",        # Primates
+        "799",        # Proboscidea
+        "801",        # Scandentia
+        "802",        # Sirenia
+        "803",        # Soricomorpha
+        "804",        # Tubulidentata
+        "828",        # Afrosoricida
+        "829",        # Erinaceomorpha
+        "1452",       # Diprotodontia
+        "1453",       # Macroscelidea
+        "1454",       # Notoryctemorphia
+        "1459",       # Rodentia
+        "1494",       # Pilosa
+
+        ## Actinopterygii / ray-finned fish (774)
+        "494",        # Amiiformes
+        "495",        # Anguilliformes
+        "496",        # Atheriniformes
+        "497",        # Aulopiformes
+        "498",        # Beloniformes
+        "499",        # Beryciformes
+        "537",        # Characiformes
+        "538",        # Clupeiformes
+        "547",        # Cyprinodontiformes
+        "548",        # Esociformes
+        "549",        # Gadiformes
+        "550",        # Gasterosteiformes
+        "587",        # Perciformes
+        "588",        # Pleuronectiformes
+        "589",        # Polymixiiformes
+        "590",        # Scorpaeniformes
+        "708",        # Siluriformes
+        "772",        # Tetraodontiformes
+        "773",        # Syngnathiformes
+        "774",        # Stomiiformes
+        "888",        # Zeiformes
+        "889",        # Synbranchiformes
+        "890",        # Stephanoberyciformes
+        "1067",       # Mugiliformes
+        "1068",       # Osmeriformes
+        "1069",       # Osteoglossiformes
+        "1103",       # Acipenseriformes
+        "1104",       # Albuliformes
+        "1105",       # Ateleopodiformes
+        "1106",       # Batrachoidiformes
+        "1107",       # Cetomimiformes
+        "1153",       # Cypriniformes
+        "1162",       # Elopiformes
+        "1163",       # Gobiesociformes
+        "1164",       # Gonorynchiformes
+        "1165",       # Gymnotiformes
+        "1166",       # Lampriformes
+        "1167",       # Lepisosteiformes
+        "1305",       # Lophiiformes
+        "1306",       # Myctophiformes
+        "1307",       # Notacanthiformes
+        "1308",       # Ophidiiformes
+        "1310",       # Percopsiformes
+        "1311",       # Polypteriformes
+        "1312",       # Saccopharyngiformes
+        "1313",       # Salmoniformes
+
+        ## Kingdom Fungi (5)
+        "95",         # Ascomycota
+        "34",         # Basidiomycota
+        "12238325",   # Mucoromycota
+
+        ## Plants (6)
+        # "7707728",  # Tracheophyta ------------------------------> too large
+        "194",        # Pinopsida
+        "196",        # Liliopsida
+        "220",        # Magnoliopsida
+        "228",        # Cycadopsida
+        "244",        # Ginkgoopsida
+        "245",        # Lycopodiopsida
+        "282",        # Gnetopsida
+        "7228684",    # Polypodiopsida
     )
 
 class GBIFClient:
