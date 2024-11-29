@@ -431,6 +431,10 @@ workflow {
   // Filter and bin occurrences
   filter_and_bin(ch_spk)
 
+  // Merge parquet files into a bigger chunks (300k records per file)
+  ch_all_filtered = filter_and_bin.out.aggregated.collect()
+  pool_parquets(ch_all_filtered)
+
 }
 
 
