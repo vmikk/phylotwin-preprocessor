@@ -136,7 +136,7 @@ process pool_species_lists {
     """
 }
 
-// Prepare data for spatial outlier removal (per species)
+// Prepare data for spatial outlier removal (atomic, per species)
 process prepare_species {
 
     tag "${specieskey}"
@@ -152,6 +152,7 @@ process prepare_species {
     def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
     def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
+    def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
     """
     echo -e "Preparing data for spatial outlier removal\n"
 
@@ -161,6 +162,7 @@ process prepare_species {
     echo "H3 resolution: "       ${params.outlier_h3_resolution}
     if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
     if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+    echo "Container engine: "    ${workflow.containerEngine}
 
     h3_preprocessor.sh \
       -i ${occurrences}'/*' \
@@ -168,8 +170,9 @@ process prepare_species {
       -o ${specieskey}.parquet \
       -r ${params.outlier_h3_resolution} \
       -t ${task.cpus} \
-      "${memoryArg}" "${tempDirArg}" \
-      "${basisOfRecordArg}"
+      ${memoryArg} ${tempDirArg} \
+      ${basisOfRecordArg} \
+      ${duckdbArg}
 
     echo "..Done"
     """
