@@ -332,8 +332,27 @@ process filter_and_bin {
     """
 }
 
+// Merge multiple parquet files (for large-occurrence species) into a single file
+process pool_parquets {
 
+  publishDir "${OUTDIR}/", mode: "${params.publish_dir_mode}", overwrite: true
 
+  input:
+    path(parquets, stageAs: "parquets_staged/*")
+  
+  output:
+    path("Filtered_parquet/*.parquet"), emit: prq
+
+  script:
+  """
+  echo "Merging parquet files"
+
+  pool_parquets.sh \
+    -i parquets_staged \
+    -o Filtered_parquet
+
+  """
+}
 
 
 
