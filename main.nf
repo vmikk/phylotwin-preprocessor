@@ -266,6 +266,7 @@ process process_dbscan {
     echo "Species key: " ${specieskey}
     if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
     if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+    echo "Container engine: "    ${workflow.containerEngine}
 
     remove_outliers_from_parquet.sh \
       -i ${occ}'/*' \
