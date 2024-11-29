@@ -6,7 +6,8 @@
 # Rscript bin/pool_occurrence_counts.R \
 #   --inpdir        occ_counts/ \
 #   --output_large  pooled_occ_counts_large.tsv \
-#   --output_small  pooled_occ_counts_small.tsv
+#   --output_small  pooled_occ_counts_small.tsv \
+#   --extinct       extinct_taxa.txt
 
 
 ## Function to load packages
