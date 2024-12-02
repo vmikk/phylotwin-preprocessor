@@ -282,6 +282,62 @@ process dbscan {
 }
 
 
+// Detect spatial outliers using DBSCAN (batched)
+process dbscan_batched {
+    // cpus 2
+
+    input:
+      path(h3_binned_csv, stageAs: "inp/*")
+
+    output:
+      path("mrg/*.DBSCAN-outliers.txt.gz"), emit: dbscan_scores
+
+    script:
+    """
+echo -e "Detecting spatial outliers using DBSCAN [BATCHED]\n"
+echo "Number of input files detected: " \$(find inp -name '*.csv.gz' | wc -l)
+
+echo "..Processing species occurrences"
+mkdir -p dbs
+find inp -name '*.csv.gz' \
+  | parallel -j1 --halt now,fail=1 \
+    --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
+    "echo {} && \
+    elki_outlier.sh \
+      --input  {} \
+      --output dbs/{/:}_DBSCAN-scores.txt.gz \
+      --method DBSCANOutlierDetection \
+      --geomodel WGS84SpheroidEarthModel \
+      --indextype RStarTree \
+      --k ${params.dbscan_minpts} \
+      --d ${params.dbscan_eps}"
+
+echo "ELKI finished"
+echo "Merging H3 cell IDs and scores"
+
+## Merge SpeciesKey, H3 cell IDs, and scores
+mkdir -p mrg
+find inp -name '*.csv.gz' \
+  | parallel -j1 --halt now,fail=1 \
+    --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
+    "echo {} && \
+    paste \
+      <(zcat "{}" | cut -d',' -f3) \
+      <(zcat "dbs/{/:}_DBSCAN-scores.txt.gz" | cut -d' ' -f2) \
+      | gzip -3 \
+      > mrg/{/:}.DBSCAN-outliers.txt.gz"
+
+## Clean up
+rm -r inp
+rm -r dbs/*DBSCAN-scores.txt.gz
+
+echo -e "\n..All done"
+    """
+}
+
+
+
+
 // Count number of grid cells identified as outliers
 process count_outliers {
 
