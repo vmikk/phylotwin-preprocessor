@@ -359,8 +359,16 @@ process pool_parquets {
 
 
 
-// Workflow
 workflow {
+  if (params.task_batching == true) {
+    task_batching()
+  } else {
+    atomic_tasks()
+  }
+}
+
+// Workflow with atomic tasks
+workflow atomic_tasks {
 
   // Input directory with GBIF species occurrences (parquet files)
   ch_occurrence_dir = Channel.fromPath(params.occurrences)
