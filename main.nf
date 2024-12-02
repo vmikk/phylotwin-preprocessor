@@ -249,7 +249,7 @@ process dbscan {
       tuple val(specieskey), path(h3_binned_csv)
 
     output:
-      tuple val(specieskey), path("${specieskey}_DBSCAN-outliers.txt.gz"), emit: dbscan_scores
+      tuple val(specieskey), path("${specieskey}.DBSCAN-outliers.txt.gz"), emit: dbscan_scores
 
     script:
     """
@@ -273,7 +273,7 @@ process dbscan {
       <(zcat "${h3_binned_csv}" | cut -d',' -f3) \
       <(zcat "${specieskey}_DBSCAN-scores.txt.gz" | cut -d' ' -f2) \
       | gzip -3 \
-      > "${specieskey}_DBSCAN-outliers.txt.gz"
+      > "${specieskey}.DBSCAN-outliers.txt.gz"
 
     rm "${specieskey}_DBSCAN-scores.txt.gz"
 
