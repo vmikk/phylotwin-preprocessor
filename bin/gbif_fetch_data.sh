@@ -55,7 +55,7 @@ cat > "${JSON}" <<EOT
             },
             {
                 "type": "isNotNull",
-                "key": "YEAR"
+                "parameter": "YEAR"
             },
             {
                 "type": "not",
