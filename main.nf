@@ -179,6 +179,66 @@ process prepare_species {
 }
 
 
+// Prepare data for spatial outlier removal, in batches
+process prepare_species_batched {
+
+    input:
+      tuple val(specieskeys), path(occurrences)
+
+    output:
+      path("prepare_species/*.csv.gz"),  emit: h3_binned_csv
+      path("prepare_species/*.parquet"), emit: h3_binned
+
+    script:
+    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
+    def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
+    """
+echo -e "Preparing data for spatial outlier removal [BATCHED]\n"
+
+echo "Species occurrences: " ${occurrences}
+echo "H3 resolution: " ${params.outlier_h3_resolution}
+
+echo -e "\n"
+echo "Species keys: ${specieskeys}"
+echo -e "\n"
+
+if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
+if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+echo "Container engine: "    ${workflow.containerEngine}
+
+echo "..Writing species keys to file"
+cat << EOF > ids
+${specieskeys.join("\n")}
+EOF
+
+mkdir -p prepare_species
+
+echo "..Processing species keys"
+parallel -j1 -a ids --halt now,fail=1 \
+  "echo {} && \
+  h3_preprocessor.sh \
+    -i ${occurrences}'/*' \
+    -s {} \
+    -o prepare_species/{}.parquet \
+    -r ${params.outlier_h3_resolution} \
+    -t ${task.cpus} \
+    ${memoryArg} ${tempDirArg} \
+    ${basisOfRecordArg} \
+    ${duckdbArg}"
+
+## Clean up
+rm ids
+rm -r ${occurrences}
+rm prepare_species/*.sql
+
+echo -e "\n..All done"
+
+    """
+}
+
+
 // Detect spatial outliers (per species) using DBSCAN
 process dbscan {
     // cpus 2
