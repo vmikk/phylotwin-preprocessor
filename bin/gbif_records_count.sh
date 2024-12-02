@@ -12,7 +12,7 @@
 
 # ./gbif_records_count.sh \
 #  -i /path/to/GBIF/dump \
-#  -o GBIF_record_counts.parquet
+#  -o GBIF_record_counts.parquet \
 #  -b PRESERVED_SPECIMEN,HUMAN_OBSERVATION \
 #  -t 10 \
 #  -m 50GB \
