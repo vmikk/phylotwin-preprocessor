@@ -117,8 +117,8 @@ export -f add_specieskey
 find "${INPUT_DIR}" -name "*.txt.gz" \
   | parallel \
     -j 1 \
-    --rpl '{s} s:.*/::; s/_.*//' \
-    "add_specieskey {} {s}" \
+    --rpl '{/:} s:(.*/)?([^/.]+)(\.[^/]+)*$:$2:' \
+    "add_specieskey {} {/:}" \
   | duckdb :memory: "${SQL_COMMAND}"
 
 echo -e "..Done\n"
