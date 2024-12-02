@@ -1,11 +1,20 @@
 #!/bin/bash
 
+## Count grid cells identified as outliers (overall and per species)
+
 ## Outlier removal summary
 # outlier_removal_summary.sh \
 #   -i scores/ \
 #   -o outlier_scores.txt.gz \
 #   -q 0.5 -t 2
 
+## Input - directory with TSV files
+#   'H3Index':      'VARCHAR',
+#   'OutlierScore': 'DOUBLE'
+#
+# Input file names should have the following format:
+#   <specieskey>.*.txt.gz
+#   (`specieskey` will be extracted from the filename)
 
 ## Function to display usage information
 usage() {
