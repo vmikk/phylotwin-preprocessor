@@ -409,6 +409,49 @@ process process_dbscan {
 }
 
 
+// Process DBSCAN results (remove grids marked as outliers, batched)
+process process_dbscan_batched {
+
+    input:
+      tuple path(dbscan_scores, stageAs: "scores/*"), path(occ)
+
+    output:
+      path("flt/*.parquet"), emit: nooutliers
+
+    script:
+    def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
+    def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
+    def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
+    """
+echo -e "Processing DBSCAN results [BATCHED]\n"
+if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
+if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
+echo "Container engine: "  ${workflow.containerEngine}
+
+echo "Number of input files detected: " \$(find scores -name '*.txt.gz' | wc -l)
+
+echo -e "\n\n..Processing species occurrences"
+mkdir -p flt
+find scores -name '*.txt.gz' \
+  | parallel -j1 --halt now,fail=1 \
+    --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
+    "echo {} && \
+    remove_outliers_from_parquet.sh \
+      -i ${occ}'/*' \
+      -w {} \
+      -r ${params.outlier_h3_resolution} \
+      -o flt/{/:}.parquet \
+      -s {/:} \
+      -t ${task.cpus} \
+      ${memoryArg} ${tempDirArg} \
+      ${basisOfRecordArg} \
+      ${duckdbArg} \
+    && echo -e '\n\n'"
+
+    """
+}
+
 
 // Filter and bin GBIF records to the H3 grid cells of final resolution
 process filter_and_bin {
