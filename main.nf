@@ -37,6 +37,7 @@ phylo_trees = [
 
 // Directory for publishing outputs
 OUTDIR = params.userid ? params.outdir + "/" + params.userid : params.outdir
+OUT_0_TRR = OUTDIR + "/Tree_stats"         // Number of GBIF records represented and not represented in phylogenetic trees
 OUT_1_PRQ = OUTDIR + "/Filtered_parquet"   // Filtered and binned species occurrences
 OUT_2_OUT = OUTDIR + "/Outliers"           // Pre-binned species occurrences with outlier scores
 
@@ -76,6 +77,8 @@ process count_occurrences {
 
 // Define species set (given phylogenetic trees available)
 process define_species_set {
+
+    publishDir "${OUT_0_TRR}", pattern: '*_stats.txt', mode: "${params.publish_dir_mode}", overwrite: true 
 
     tag "${taxon}"
 
