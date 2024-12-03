@@ -51,16 +51,16 @@ process count_occurrences {
       path "Occurrences_counts.csv.gz",  emit: occ_counts_csv
 
     script:
-    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
-    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     """
     echo -e "Counting species occurrences\n"
 
     echo "Input directory: " ${occurrences}
     echo "CPUs: " ${task.cpus}
-    if [ ! -z ${memoryArg}  ]; then echo "Memory: ${memoryArg}";          fi
-    if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+    if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
+    if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
 
     gbif_records_count.sh \
       -i ${occurrences} \
@@ -149,8 +149,8 @@ process prepare_species {
       path("${specieskey}.parquet"),                        emit: h3_binned
 
     script:
-    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
-    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
     """
@@ -160,8 +160,8 @@ process prepare_species {
     echo "Species key: "         ${specieskey}
     echo "Output file: "         ${specieskey}.parquet
     echo "H3 resolution: "       ${params.outlier_h3_resolution}
-    if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
-    if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+    if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
+    if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
     echo "Container engine: "    ${workflow.containerEngine}
 
     h3_preprocessor.sh \
@@ -190,8 +190,8 @@ process prepare_species_batched {
       path("prepare_species/*.parquet"), emit: h3_binned
 
     script:
-    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
-    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
     """
@@ -204,9 +204,9 @@ echo -e "\n"
 echo "Species keys: ${specieskeys}"
 echo -e "\n"
 
-if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
-if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
-echo "Container engine: "    ${workflow.containerEngine}
+if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
+if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
+echo "Container engine: " ${workflow.containerEngine}
 
 echo "..Writing species keys to file"
 cat << EOF > ids
@@ -351,8 +351,12 @@ process count_outliers {
     path("outlier_scores_summary.txt")
 
   script:
+  def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
+  def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
   """
   echo -e "Outlier removal summary\n"
+  if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
+  if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
 
   outlier_removal_summary.sh \
     -i \$(pwd)/scores \
@@ -376,16 +380,16 @@ process process_dbscan {
       tuple val("${specieskey}"), path("${specieskey}.parquet"), path("${specieskey}.txt"), emit: nooutliers
 
     script:
-    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
-    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
     """
     echo -e "Processing DBSCAN results\n"
     echo "Species key: " ${specieskey}
-    if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
-    if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
-    echo "Container engine: "    ${workflow.containerEngine}
+    if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
+    if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
+    echo "Container engine: " ${workflow.containerEngine}
 
     remove_outliers_from_parquet.sh \
       -i ${occ}'/*' \
@@ -423,8 +427,8 @@ process filter_and_bin {
     // or a single parquet file (outlier-removed data for large-occurrence species)
     def inp = occ.getName().endsWith('.parquet') ? occ : "${occ}'/*'"
     
-    def tempDirArg = task.tempDir ? "-x ${task.tempDir}" : ""
-    def memoryArg  = task.memory  ? "-m ${task.memory}"  : ""
+    def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
     """
@@ -434,8 +438,8 @@ process filter_and_bin {
     echo "Species keys: "        ${name}
     echo "Output file: "         ${name}_filtered.parquet
     echo "H3 resolution: "       ${params.h3_resolution}
-    if [ ! -z ${memoryArg} ];  then echo "Memory: ${memoryArg}";          fi
-    if [ ! -z ${tempDirArg} ]; then echo "Temp directory: ${tempDirArg}"; fi
+    if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
+    if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
     echo "Container engine: "    ${workflow.containerEngine}
 
     filter_and_bin.sh \
