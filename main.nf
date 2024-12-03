@@ -495,8 +495,55 @@ process filter_and_bin {
       ${basisOfRecordArg} \
       ${duckdbArg}
 
+
+// Filter and bin GBIF records to the H3 grid cells of final resolution (batched)
+process filter_and_bin_batched {
+
+    input:
+      path(occ, stageAs: "flt/*")
+
+    output:
+      path "binned/*.parquet", emit: aggregated
+
+    script:
+    def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
+    def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
+    def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
+    def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
+    """
+    echo -e "Filtering and binning GBIF records [BATCHED]\n"
+
+    echo "Filtered species occurrences: " ${occ}
+    echo "H3 resolution: " ${params.h3_resolution}
+    if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
+    if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
+    echo "Container engine: "    ${workflow.containerEngine}
+
+    ## Create files with species keys (for compatibility with low-occurrence species filtering)
+    mkdir -p spkeys
+    find flt -name '*.parquet' \
+      | parallel -j1 --halt now,fail=1 \
+        --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
+        "echo {/:} > spkeys/{/:}.txt"
+
+    ## Filter and bin occurrences
+    mkdir -p binned
+    find flt -name '*.parquet' \
+      | parallel -j1 --halt now,fail=1 \
+        --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
+        "filter_and_bin.sh \
+          -i {} \
+          -s spkeys/{/:}.txt \
+          -o binned/{/:}.parquet \
+          -r ${params.h3_resolution} \
+          -t ${task.cpus} \
+          ${memoryArg} ${tempDirArg} \
+          ${basisOfRecordArg} \
+          ${duckdbArg}"
+
     """
 }
+
 
 // Merge multiple parquet files (for large-occurrence species) into a single file
 process pool_parquets {
