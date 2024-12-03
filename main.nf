@@ -457,7 +457,7 @@ find scores -name '*.txt.gz' \
 process filter_and_bin {
 
     tag "${name}"
-    publishDir "${OUT_1_PRQ}", mode: "${params.publish_dir_mode}"
+    // publishDir "${OUT_1_PRQ}", mode: "${params.publish_dir_mode}"
 
     input:
       tuple val(name), path(occ), path(spp)
