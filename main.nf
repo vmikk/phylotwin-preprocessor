@@ -562,12 +562,19 @@ process pool_parquets {
     path("Filtered_parquet/*.parquet"), emit: prq
 
   script:
+  def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
+  def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
   """
   echo "Merging parquet files"
 
+  if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
+  if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
+
   pool_parquets.sh \
     -i parquets_staged \
-    -o Filtered_parquet
+    -o Filtered_parquet \
+    -t ${task.cpus} \
+    ${memoryArg} ${tempDirArg}
 
   """
 }
