@@ -113,6 +113,54 @@ process define_species_set {
     """
 }
 
+// Define species set (batched)
+process define_species_set_batched {
+
+    publishDir "${OUT_0_TRR}", pattern: 'results/*_stats.txt', saveAs: { filename -> file(filename).name }, mode: "${params.publish_dir_mode}", overwrite: true
+
+    input:
+      path(occ_counts_csv)
+      path(phylotrees_table)
+      path(phylotree_initial,   stageAs: "t1/*")
+      path(phylotree_processed, stageAs: "t2/*")
+
+    output:
+      path "results/*_Occurrences_large.txt",  emit: occ_large
+      path "results/*_Occurrences_small.txt",  emit: occ_small
+      path "results/*_stats.txt",              emit: stats
+
+    script:
+    """
+    echo -e "Defining species set [BATCHED]\n"
+    echo "Occurrences counts: "   ${occ_counts_csv}
+    echo "Tree table (by taxon): "${phylotrees_table}
+    echo "Processed trees: "      ${phylotree_processed}
+    echo "Initial trees: "        ${phylotree_initial}
+    echo "Occurrence threshold: " ${params.outlier_occurrence_threshold}
+
+    ## Remove paths from the tree table
+    awk -F'\t' 'BEGIN { OFS=FS } { sub(".*/", "", \$2); sub(".*/", "", \$3); print }' \
+      ${phylotrees_table} \
+      > tree_table_no_paths.txt
+
+    echo -e "\nCounting the number of GBIF records represented and not represented in a phylogenetic tree\n"
+
+    mkdir results
+
+    parallel -j1 -a tree_table_no_paths.txt --colsep '\t' \
+      "echo {1} && \
+      gbif_records_in_tree.R \
+        --gbif                 ${occ_counts_csv} \
+        --sourcetree           t1/{2} \
+        --tree                 t2/{3} \
+        --occurrence_threshold ${params.outlier_occurrence_threshold} \
+        --outputstats          results/{1}_stats.txt \
+        --output_large_occ     results/{1}_Occurrences_large.txt \
+        --output_low_occ       results/{1}_Occurrences_small.txt"
+
+    """
+}
+
 
 // Pool species lists from different taxonomic groups
 // In different trees, there might the same species (e.g., outgroup species or if trees overlap),
