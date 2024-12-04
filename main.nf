@@ -364,7 +364,9 @@ process count_outliers {
   outlier_removal_summary.sh \
     -i \$(pwd)/scores \
     -o outlier_scores.txt.gz \
-    -q 0.5 -t 2
+    -q 0.5 -t ${task.cpus} \
+    ${memoryArg} ${tempDirArg}
+
 
   """
 }
