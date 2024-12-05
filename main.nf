@@ -34,6 +34,9 @@ phylo_trees = [
 // GTDB_ar53_r220.tre.gz
 // GTDB_bac120_r220.tre.gz
 
+params.task_batching = false
+params.batchsize = 40   // .buffer(size: params.batchsize, remainder: true)
+
 
 // Directory for publishing outputs
 OUTDIR = params.userid ? params.outdir + "/" + params.userid : params.outdir
