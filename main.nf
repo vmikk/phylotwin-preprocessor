@@ -719,6 +719,38 @@ workflow atomic_tasks {
 }
 
 
+// Workflow with task batching
+workflow task_batching {
+
+  // Input directory with GBIF species occurrences (parquet files)
+  ch_occurrence_dir = Channel.fromPath(params.occurrences)
+
+  // Count species occurrences
+  count_occurrences(ch_occurrence_dir)
+
+  // Phylogenetic trees
+  ch_phylotrees = Channel.fromList(phylo_trees)
+
+  // Collect phylogenetic trees into a table (since trees can be named in non-regular way)
+  ch_phylotrees
+    .map { tuple -> tuple.join('\t') }
+    .collectFile(name: 'table.txt', newLine: true)
+    .set { ch_phylotrees_table }
+
+  ch_trees_1 = ch_phylotrees.map { tuple -> tuple[1] }.collect()  // initial trees
+  ch_trees_2 = ch_phylotrees.map { tuple -> tuple[2] }.collect()  // processed trees
+
+  // Define species set, split into large and small occurrence sets
+  define_species_set_batched(
+    count_occurrences.out.occ_counts_csv,
+    ch_phylotrees_table,
+    ch_trees_1,
+    ch_trees_2
+  )
+
+}
+
+
 // On completion
 workflow.onComplete {
     println "Pipeline completed at : $workflow.complete"
