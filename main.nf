@@ -36,6 +36,7 @@ phylo_trees = [
 
 params.task_batching = false
 params.batchsize = 40   // .buffer(size: params.batchsize, remainder: true)
+params.cleanupwd = true
 
 
 // Directory for publishing outputs
@@ -72,6 +73,11 @@ process count_occurrences {
       -t ${task.cpus} \
       ${memoryArg} ${tempDirArg} \
       ${basisOfRecordArg}
+
+    if [ ${params.cleanupwd} == true ]; then
+      echo "Cleaning up"
+      rm -r ${occurrences}
+    fi
 
     echo "..Done"
     """
@@ -113,6 +119,10 @@ process define_species_set {
       --output_large_occ     ${taxon}_Occurrences_large.txt \
       --output_low_occ       ${taxon}_Occurrences_small.txt
 
+    if [ ${params.cleanupwd} == true ]; then
+      echo "Cleaning up"
+      rm -r ${phylotree_initial} ${phylotree_processed}
+    fi
     """
 }
 
@@ -161,6 +171,10 @@ process define_species_set_batched {
         --output_large_occ     results/{1}_Occurrences_large.txt \
         --output_low_occ       results/{1}_Occurrences_small.txt"
 
+    if [ ${params.cleanupwd} == true ]; then
+      echo "Cleaning up"
+      rm -r t1 t2
+    fi
     """
 }
 
@@ -187,6 +201,11 @@ process pool_species_lists {
       --output_large  Occurrences_large.txt \
       --output_small  Occurrences_small.txt \
       ${extinctArg}
+
+    if [ ${params.cleanupwd} == true ]; then
+      echo "Cleaning up"
+      rm -r occ_counts
+    fi
     """
 }
 
@@ -227,6 +246,12 @@ process prepare_species {
       ${memoryArg} ${tempDirArg} \
       ${basisOfRecordArg} \
       ${duckdbArg}
+
+
+    if [ ${params.cleanupwd} == true ]; then
+      echo "Cleaning up"
+      rm -r ${occurrences}
+    fi
 
     echo "..Done"
     """
@@ -282,13 +307,14 @@ parallel -j1 -a ids --halt now,fail=1 \
     ${basisOfRecordArg} \
     ${duckdbArg}"
 
-## Clean up
-rm ids
-rm -r ${occurrences}
-rm prepare_species/*.sql
+if [ ${params.cleanupwd} == true ]; then
+  echo "Cleaning up"
+  rm ids
+  rm -r ${occurrences}
+  rm prepare_species/*.sql
+fi
 
 echo -e "\n..All done"
-
     """
 }
 
@@ -329,7 +355,11 @@ process dbscan {
       | gzip -3 \
       > "${specieskey}.DBSCAN-outliers.txt.gz"
 
-    rm "${specieskey}_DBSCAN-scores.txt.gz"
+    if [ ${params.cleanupwd} == true ]; then
+      echo "Cleaning up"
+      rm "${specieskey}_DBSCAN-scores.txt.gz"
+      rm "${h3_binned_csv}"
+    fi
 
     echo "..Done"
     """
@@ -382,14 +412,15 @@ find inp -name '*.csv.gz' \
       > mrg/{/:}.DBSCAN-outliers.txt.gz"
 
 ## Clean up
-rm -r inp
-rm -r dbs/*DBSCAN-scores.txt.gz
+if [ ${params.cleanupwd} == true ]; then
+  echo "Cleaning up"
+  rm -r inp
+  rm -r dbs/*DBSCAN-scores.txt.gz
+fi
 
 echo -e "\n..All done"
     """
 }
-
-
 
 
 // Count number of grid cells identified as outliers
@@ -418,6 +449,10 @@ process count_outliers {
     -q 0.5 -t ${task.cpus} \
     ${memoryArg} ${tempDirArg}
 
+  if [ ${params.cleanupwd} == true ]; then
+    echo "Cleaning up"
+    rm -r scores
+  fi
 
   """
 }
@@ -461,6 +496,15 @@ process process_dbscan {
     ## For compatibility with low-occurrence species, we need a file with species keys
     echo ${specieskey} > "${specieskey}.txt"
 
+    if [ ${params.cleanupwd} == true ]; then
+      echo "Cleaning up"
+      rm ${dbscan_scores}
+      if [ -d ${occ} ]; then
+        rm -r ${occ}
+      else
+        rm ${occ}
+      fi
+    fi
     """
 }
 
