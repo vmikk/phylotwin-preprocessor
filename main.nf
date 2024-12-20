@@ -549,6 +549,13 @@ find scores -name '*.txt.gz' \
       ${duckdbArg} \
     && echo -e '\n\n'"
 
+## Clean up
+if [ ${params.cleanupwd} == true ]; then
+  echo "Cleaning up"
+  rm -r scores
+  rm -r flt/*.sql
+  rm -r ${occ}
+fi
     """
 }
 
@@ -594,6 +601,22 @@ process filter_and_bin {
       ${memoryArg} ${tempDirArg} \
       ${basisOfRecordArg} \
       ${duckdbArg}
+
+    echo -e "\nFiltering and binning finished. Cleaning up\n"
+
+    ## Clean up
+    if [ ${params.cleanupwd} == true ]; then
+      echo "Cleaning up"
+      if [ -e ${occ} ]; then
+        if [ -d ${occ} ]; then
+          rm -r ${occ}
+        else
+          rm ${occ}
+        fi
+      fi
+    fi
+    """
+}
 
 
 // Filter and bin GBIF records to the H3 grid cells of final resolution (batched)
