@@ -827,6 +827,17 @@ workflow task_batching {
     ch_trees_2
   )
 
+  // Channel with occurrence counts (collected over different taxa)
+  ch_occcounts = define_species_set.out.occ_large
+    .merge(define_species_set.out.occ_small)
+    .collect()
+  
+  // Extinct taxa (optional, if provided)
+  ch_extinct_taxa = params.extinct_taxa ? Channel.fromPath(params.extinct_taxa) : Channel.empty()
+
+  // Pool species lists from different taxonomic groups
+  pool_species_lists(ch_occcounts, ch_extinct_taxa)
+
 }
 
 
