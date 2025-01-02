@@ -664,6 +664,15 @@ process filter_and_bin_batched {
           ${basisOfRecordArg} \
           ${duckdbArg}"
 
+    ## Clean up
+    if [ ${params.cleanupwd} == true ]; then
+      echo -e "\nFiltering and binning finished. Cleaning up\n"
+      rm -r spkeys
+      rm -r flt
+      rm -r binned/*.sql
+    fi
+
+    echo -e "\n..All done\n"
     """
 }
 
