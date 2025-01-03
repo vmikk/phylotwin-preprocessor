@@ -703,6 +703,13 @@ process pool_parquets {
     -t ${task.cpus} \
     ${memoryArg} ${tempDirArg}
 
+  echo "Pooling parquet files finished"
+
+  ## Clean up
+  if [ ${params.cleanupwd} == true ]; then
+    echo "Cleaning up"
+    rm -r parquets_staged
+  fi
   """
 }
 
