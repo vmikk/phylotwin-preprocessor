@@ -845,6 +845,18 @@ workflow task_batching {
   // Pool species lists from different taxonomic groups
   pool_species_lists(ch_occcounts, ch_extinct_taxa)
 
+  // Channel with species keys for spatial outlier removal
+  // NB. results returned by `splitText` operator are always terminated by a `\n` newline character, so we need to trim it
+  // Output: [ [1, 2, 3], glob_occ ]
+  ch_large_species = pool_species_lists.out.occ_large
+    .splitText()
+    .map{ it -> it.trim() }
+    .buffer(size: params.batchsize, remainder: true)
+    .map { it -> [it] }
+    .combine(ch_occurrence_dir)
+
+  // Prepare data for spatial outlier removal (large species only)
+  prepare_species_batched(ch_large_species)
 }
 
 
