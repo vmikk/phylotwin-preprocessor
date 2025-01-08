@@ -12,7 +12,7 @@ From: rocker/r-ver:4.4.2
     apt-get update \
       && apt-get install -y --no-install-recommends \
         curl wget git less \
-        default-jre
+        default-jre parallel
 
     ## Install additional R packages
     install2.r --error --skipmissing --skipinstalled --ncpus -1 \
