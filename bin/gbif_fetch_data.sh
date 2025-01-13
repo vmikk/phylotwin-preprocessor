@@ -167,6 +167,32 @@ EOT
 #            },
 
 
+## "COORDINATE_PRECISION": not one of the values accepted for Enum class:
+#            {
+#                "type": "or",
+#                "predicates": [
+#                    {
+#                        "type": "lessThan",
+#                        "key": "COORDINATE_PRECISION",
+#                        "value": "0.1"
+#                    },
+#                    {
+#                        "type": "isNull",
+#                        "parameter": "COORDINATE_PRECISION"
+#                    }
+#                ]
+#            }
+
+
+## Validate the JSON
+echo -e "Validating the JSON...\n"
+if [ $(cat "${JSON}" | jq empty > /dev/null 2>&1; echo $?) -eq 0 ]; then
+  echo "..JSON is valid"
+else
+  echo "..JSON is invalid! Exiting..."
+  exit 1
+fi
+
 
 ## Send the request to GBIF
 echo -e "Sending request to GBIF...\n"
