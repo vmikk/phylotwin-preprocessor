@@ -871,6 +871,13 @@ workflow task_batching {
   // Process DBSCAN results (remove grids marked as outliers, batched)
   process_dbscan_batched(ch_dbscan_scores)
 
+  // Outlier removal summary
+  dbscan_batched.out.dbscan_scores
+    .collect()
+    .set { ch_all_scores }
+
+  count_outliers(ch_all_scores)
+
 }
 
 
