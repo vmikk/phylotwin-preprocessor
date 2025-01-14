@@ -885,6 +885,17 @@ workflow task_batching {
 
   filter_and_bin(ch_spk_low)
 
+  // Large-occurrence filtering
+  filter_and_bin_batched(process_dbscan_batched.out.nooutliers)
+  
+  // Merge parquet files into a bigger chunks (300k records per file)
+  filter_and_bin_batched.out.aggregated
+    .concat(filter_and_bin.out.aggregated)
+    .collect()
+    .set { ch_all_filtered }
+
+  pool_parquets(ch_all_filtered)
+
 }
 
 
