@@ -878,6 +878,13 @@ workflow task_batching {
 
   count_outliers(ch_all_scores)
 
+  // Low-occurrence filtering   tuple("low", raw_data, low_occ_specieskeys )
+  ch_occurrence_dir
+    .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
+    .set { ch_spk_low }
+
+  filter_and_bin(ch_spk_low)
+
 }
 
 
