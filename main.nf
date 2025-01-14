@@ -835,8 +835,8 @@ workflow task_batching {
   )
 
   // Channel with occurrence counts (collected over different taxa)
-  ch_occcounts = define_species_set.out.occ_large
-    .merge(define_species_set.out.occ_small)
+  ch_occcounts = define_species_set_batched.out.occ_large
+    .merge(define_species_set_batched.out.occ_small)
     .collect()
   
   // Extinct taxa (optional, if provided)
