@@ -1,7 +1,18 @@
 
+# Singularity recipe for PhyloTwinPreprocessor pipeline
+
+## NB!
+##  Every JVM creates a temporary performance instrumentation file in `/tmp/hsperfdata_<user>/<pid>`
+##  With Singularity, there could be PID collisions when running multiple instances of the same container
+##  --> use `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem` with Java
+
 Bootstrap: docker
 From: rocker/r-ver:4.4.2
 
+%labels
+    Author vladimir.mikryukov@ut.ee
+    Version v0.5
+    Description PhyloNext/PhyloTwin preprocessing container
 
 %post
 
