@@ -753,47 +753,72 @@ workflow atomic_tasks {
   // Pool species lists from different taxonomic groups
   pool_species_lists(ch_occcounts, ch_extinct_taxa)
 
-  // Channel with species keys for spatial outlier removal
-  // NB. results returned by `splitText` operator are always terminated by a `\n` newline character, so we need to trim it
-  ch_large_species = pool_species_lists.out.occ_large
-    .splitText()
-    .map{ it -> it.trim() }
-    .combine(ch_occurrence_dir)
+  // Run outlier removal for "large" species
+  if (params.nodbscan == false) {
 
-  // Prepare data for spatial outlier removal (large species only)
-  prepare_species(ch_large_species)
+    // Channel with species keys for spatial outlier removal
+    // NB. results returned by `splitText` operator are always terminated by a `\n` newline character, so we need to trim it
+    ch_large_species = pool_species_lists.out.occ_large
+      .splitText()
+      .map{ it -> it.trim() }
+      .combine(ch_occurrence_dir)
 
-  // Remove spatial outliers using DBSCAN
-  dbscan(prepare_species.out.h3_binned_csv)
+    // Prepare data for spatial outlier removal (large species only)
+    prepare_species(ch_large_species)
 
-  // Add raw occurrence path to the channel with DBSCAN scores
-  // tuple(specieskey, dbscan_scores, occurrence_path)
-  dbscan.out.dbscan_scores
-    .combine(ch_occurrence_dir)
-    .set { ch_dbscan_scores }
+    // Remove spatial outliers using DBSCAN
+    dbscan(prepare_species.out.h3_binned_csv)
 
-  // Process DBSCAN results (remove grids marked as outliers)
-  process_dbscan(ch_dbscan_scores)
+    // Add raw occurrence path to the channel with DBSCAN scores
+    // tuple(specieskey, dbscan_scores, occurrence_path)
+    dbscan.out.dbscan_scores
+      .combine(ch_occurrence_dir)
+      .set { ch_dbscan_scores }
 
-  // Outlier removal summary
-  dbscan.out.dbscan_scores
-    .map { it -> it[1] }
-    .collect()
-    .set { ch_all_scores }
- 
-  count_outliers(ch_all_scores)
+    // Process DBSCAN results (remove grids marked as outliers)
+    process_dbscan(ch_dbscan_scores)
 
-  // Data for low-occurrence filtering   tuple("low", raw_data, low_occ_specieskeys )
-  ch_occurrence_dir
-    .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
-    .set { ch_spk_low }
+    // Outlier removal summary
+    dbscan.out.dbscan_scores
+      .map { it -> it[1] }
+      .collect()
+      .set { ch_all_scores }
+  
+    count_outliers(ch_all_scores)
 
-  // Data for large-occurrence filtering   tuple( specieskey, outlier_removed_data, large_occ_specieskey )
-  ch_spk_large = process_dbscan.out.nooutliers
+    // Data for low-occurrence filtering   tuple("low", raw_data, low_occ_specieskeys )
+    ch_occurrence_dir
+      .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
+      .set { ch_spk_low }
 
-  ch_spk_low
-    .concat(ch_spk_large)
-    .set { ch_spk }
+    // Data for large-occurrence filtering   tuple( specieskey, outlier_removed_data, large_occ_specieskey )
+    ch_spk_large = process_dbscan.out.nooutliers
+
+    ch_spk_low
+      .concat(ch_spk_large)
+      .set { ch_spk }
+
+    // end of outlier removal
+
+  } else {
+
+    // Prepare tuples for filtering and binning of species (without outlier removal)
+    ch_occurrence_dir
+      .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
+      .set { ch_spk_low }
+
+    ch_occurrence_dir
+      .merge(pool_species_lists.out.occ_large) { occ, spp -> tuple("large", occ, spp) }
+      .set { ch_spk_large }
+
+    // tuple("low",   raw_data, low_occ_specieskeys )
+    // tuple("large", raw_data, large_occ_specieskeys )
+
+    ch_spk_low
+      .concat(ch_spk_large)
+      .set { ch_spk }
+
+  }
 
   // Filter and bin occurrences
   filter_and_bin(ch_spk)
