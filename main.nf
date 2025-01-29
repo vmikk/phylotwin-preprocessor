@@ -873,18 +873,18 @@ workflow task_batching {
   // Run outlier removal for "large" species
   if (params.nodbscan == false) {
 
-  // Channel with species keys for spatial outlier removal
-  // NB. results returned by `splitText` operator are always terminated by a `\n` newline character, so we need to trim it
-  // Output: [ [1, 2, 3], glob_occ ]
-  ch_large_species = pool_species_lists.out.occ_large
-    .splitText()
-    .map{ it -> it.trim() }
-    .buffer(size: params.batchsize, remainder: true)
-    .map { it -> [it] }
-    .combine(ch_occurrence_dir)
+    // Channel with species keys for spatial outlier removal
+    // NB. results returned by `splitText` operator are always terminated by a `\n` newline character, so we need to trim it
+    // Output: [ [1, 2, 3], glob_occ ]
+    ch_large_species = pool_species_lists.out.occ_large
+      .splitText()
+      .map{ it -> it.trim() }
+      .buffer(size: params.batchsize, remainder: true)
+      .map { it -> [it] }
+      .combine(ch_occurrence_dir)
 
-  // Prepare data for spatial outlier removal (large species only)
-  prepare_species_batched(ch_large_species)
+    // Prepare data for spatial outlier removal (large species only)
+    prepare_species_batched(ch_large_species)
 
   // Remove spatial outliers using DBSCAN
   dbscan_batched(prepare_species_batched.out.h3_binned_csv)
