@@ -870,6 +870,9 @@ workflow task_batching {
   // Pool species lists from different taxonomic groups
   pool_species_lists(ch_occcounts, ch_extinct_taxa)
 
+  // Run outlier removal for "large" species
+  if (params.nodbscan == false) {
+
   // Channel with species keys for spatial outlier removal
   // NB. results returned by `splitText` operator are always terminated by a `\n` newline character, so we need to trim it
   // Output: [ [1, 2, 3], glob_occ ]
@@ -920,6 +923,36 @@ workflow task_batching {
     .set { ch_all_filtered }
 
   pool_parquets(ch_all_filtered)
+
+    // end of outlier removal
+
+  } else {
+
+    // Prepare tuples for filtering and binning of species (without outlier removal)
+    ch_occurrence_dir
+      .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
+      .set { ch_spk_low }
+
+    ch_occurrence_dir
+      .merge(pool_species_lists.out.occ_large) { occ, spp -> tuple("large", occ, spp) }
+      .set { ch_spk_large }
+
+    // tuple("low",   raw_data, low_occ_specieskeys )
+    // tuple("large", raw_data, large_occ_specieskeys )
+
+    ch_spk_low
+      .concat(ch_spk_large)
+      .set { ch_spk }
+
+    // Filter and bin occurrences
+    filter_and_bin(ch_spk)
+
+    // Merge parquet files into a bigger chunks (300k records per file)
+    ch_all_filtered = filter_and_bin.out.aggregated.collect()
+    pool_parquets(ch_all_filtered)
+
+    // end of no-outlier-removal
+  }
 
 }
 
