@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+title: "Species occurrence preprocessing pipeline for GBIF data"
+type: software
+authors:
+- family-names: "Mikryukov"
+  given-names: "Vladimir"
+  orcid: "https://orcid.org/0000-0003-2786-2690"
+doi: 10.5281/zenodo.14856619
+url: "https://github.com/vmikk/phylotwin-preprocessor"
+repository-code: "https://github.com/vmikk/phylotwin-preprocessor"
+license: MIT
+version: 0.5.0
+date-released: 2025-02-12
