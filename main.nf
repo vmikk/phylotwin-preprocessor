@@ -886,18 +886,18 @@ workflow task_batching {
     // Prepare data for spatial outlier removal (large species only)
     prepare_species_batched(ch_large_species)
 
-  // Remove spatial outliers using DBSCAN
-  dbscan_batched(prepare_species_batched.out.h3_binned_csv)
+    // Remove spatial outliers using DBSCAN
+    dbscan_batched(prepare_species_batched.out.h3_binned_csv)
 
-  // Add raw occurrence path to the channel with DBSCAN scores
-  // Output: [ [ out1, out2, out3 ], glob_occ ]
-  dbscan_batched.out.dbscan_scores
-    .map { it -> [it] }
-    .combine(ch_occurrence_dir)
-    .set { ch_dbscan_scores }
+    // Add raw occurrence path to the channel with DBSCAN scores
+    // Output: [ [ out1, out2, out3 ], glob_occ ]
+    dbscan_batched.out.dbscan_scores
+      .map { it -> [it] }
+      .combine(ch_occurrence_dir)
+      .set { ch_dbscan_scores }
 
-  // Process DBSCAN results (remove grids marked as outliers, batched)
-  process_dbscan_batched(ch_dbscan_scores)
+    // Process DBSCAN results (remove grids marked as outliers, batched)
+    process_dbscan_batched(ch_dbscan_scores)
 
   // Outlier removal summary
   dbscan_batched.out.dbscan_scores
