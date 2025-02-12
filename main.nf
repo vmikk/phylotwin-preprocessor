@@ -899,30 +899,30 @@ workflow task_batching {
     // Process DBSCAN results (remove grids marked as outliers, batched)
     process_dbscan_batched(ch_dbscan_scores)
 
-  // Outlier removal summary
-  dbscan_batched.out.dbscan_scores
-    .collect()
-    .set { ch_all_scores }
+    // Outlier removal summary
+    dbscan_batched.out.dbscan_scores
+      .collect()
+      .set { ch_all_scores }
 
-  count_outliers(ch_all_scores)
+    count_outliers(ch_all_scores)
 
-  // Low-occurrence filtering   tuple("low", raw_data, low_occ_specieskeys )
-  ch_occurrence_dir
-    .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
-    .set { ch_spk_low }
+    // Low-occurrence filtering   tuple("low", raw_data, low_occ_specieskeys )
+    ch_occurrence_dir
+      .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
+      .set { ch_spk_low }
 
-  filter_and_bin(ch_spk_low)
+    filter_and_bin(ch_spk_low)
 
-  // Large-occurrence filtering
-  filter_and_bin_batched(process_dbscan_batched.out.nooutliers)
-  
-  // Merge parquet files into a bigger chunks (300k records per file)
-  filter_and_bin_batched.out.aggregated
-    .concat(filter_and_bin.out.aggregated)
-    .collect()
-    .set { ch_all_filtered }
+    // Large-occurrence filtering
+    filter_and_bin_batched(process_dbscan_batched.out.nooutliers)
+    
+    // Merge parquet files into a bigger chunks (300k records per file)
+    filter_and_bin_batched.out.aggregated
+      .concat(filter_and_bin.out.aggregated)
+      .collect()
+      .set { ch_all_filtered }
 
-  pool_parquets(ch_all_filtered)
+    pool_parquets(ch_all_filtered)
 
     // end of outlier removal
 
