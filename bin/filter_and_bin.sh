@@ -7,10 +7,10 @@
 #   -i '/path/to/GBIF/dump/*' \
 #   -o '/path/to/output.parquet' \
 #   -r 4 \
-#   -s spkeys.txt
+#   -s spnames.txt
 
 ## Main workflow:
-# - filter records using the `specieskey` column
+# - filter records using the `species` column
 # - optionally filter records using the `basis_of_record` column
 # - bin and count occurrences per H3 cell, species, and collection year
 # - aggregate data sources
@@ -18,11 +18,11 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR] [-z COMPRESSION]"
+    echo "Usage: $0 -i INPUT -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR] [-z COMPRESSION]"
     echo "  -i INPUT           : Input Parquet file or directory path"
     echo "  -o OUTPUT_FILE     : Output Parquet file path"
     echo "  -r H3_RESOLUTION   : H3 resolution (0-15)"
-    echo "  -s spkeys.txt      : Text file with species keys (one per line)"
+    echo "  -s spnames.txt     : Text file with species names (one per line)"
     echo "  -b BASIS_OF_RECORD : Comma-separated list of basis of record values to include (optional)"
     echo "  -t THREADS         : Number of CPU threads to use (optional)"
     echo "  -m MEMORY          : Memory limit (e.g., '100GB') (optional)"
@@ -36,7 +36,7 @@ usage() {
 INPUT=""
 OUTPUT_FILE=""
 H3_RESOLUTION=""
-SPECIES_KEYS=""
+SPECIES=""
 BASIS_OF_RECORD=""
 THREADS=""
 MEMORY=""
@@ -50,7 +50,7 @@ while getopts "i:o:r:s:b:t:m:x:e:z:" opt; do
         i) INPUT="$OPTARG" ;;
         o) OUTPUT_FILE="$OPTARG" ;;
         r) H3_RESOLUTION="$OPTARG" ;;
-        s) SPECIES_KEYS="$OPTARG" ;;
+        s) SPECIES="$OPTARG" ;;
         b) BASIS_OF_RECORD="$OPTARG" ;;
         t) THREADS="$OPTARG" ;;
         m) MEMORY="$OPTARG" ;;
@@ -62,7 +62,7 @@ while getopts "i:o:r:s:b:t:m:x:e:z:" opt; do
 done
 
 ## Validate input parameters
-if [[ -z "$INPUT" || -z "$OUTPUT_FILE" || -z "$H3_RESOLUTION" || -z "$SPECIES_KEYS" ]]; then
+if [[ -z "$INPUT" || -z "$OUTPUT_FILE" || -z "$H3_RESOLUTION" || -z "$SPECIES" ]]; then
     echo -e "Error: Missing required parameters!\n"
     usage
 fi
@@ -72,8 +72,8 @@ if ! [[ "$H3_RESOLUTION" =~ ^[0-9]+$ ]] || [ "$H3_RESOLUTION" -lt 0 ] || [ "$H3_
     usage
 fi
 
-if [ ! -r "$SPECIES_KEYS" ]; then
-    echo -e "Error: Species keys file '$SPECIES_KEYS' does not exist or is not readable!\n"
+if [ ! -r "$SPECIES" ]; then
+    echo -e "Error: Species names file '$SPECIES' does not exist or is not readable!\n"
     usage
 fi
 
@@ -125,9 +125,9 @@ echo -e "\nInput parameters:"
 echo "Input: $INPUT"
 echo "Output file: $OUTPUT_FILE"
 echo "H3 resolution: $H3_RESOLUTION"
-echo "File with species keys: $SPECIES_KEYS"
-NN=$(wc -l < "${SPECIES_KEYS}")
-echo "..Number of species keys detected: $NN"
+echo "File with species names: $SPECIES"
+NN=$(wc -l < "${SPECIES}")
+echo "..Number of species names detected: $NN"
 if [[ -n "$BASIS_OF_RECORD" ]]; then
     echo "Basis of record filter: $BASIS_OF_RECORD"
 fi
@@ -182,9 +182,9 @@ SQL_COMMAND+="
 LOAD h3;
 
 -- Create a table containing species keys of interest
-CREATE TEMP TABLE species_keys AS 
-SELECT CAST(column0 AS BIGINT) AS specieskey 
-FROM read_csv('${SPECIES_KEYS}', header=false);
+CREATE TEMP TABLE species_names AS 
+SELECT CAST(column0 AS VARCHAR) AS species 
+FROM read_csv('${SPECIES}', header=false);
 
 -- Bin and count occurrences per H3 cell
 COPY (
@@ -193,11 +193,11 @@ COPY (
             SELECT 
                 h3_latlng_to_cell(decimallatitude, decimallongitude, ${H3_RESOLUTION})::UBIGINT AS h3_index,
                 datasetkey, 
-                specieskey,
+                species,
                 year
             FROM 
                 read_parquet('${INPUT}')
-            WHERE specieskey IN (SELECT specieskey FROM species_keys) "
+            WHERE species IN (SELECT species FROM species_names) "
 
 # Add basis of record filter if specified
 if [[ -n "$BASIS_OF_RECORD" ]]; then
@@ -210,18 +210,18 @@ SQL_COMMAND+="),
         unique_grids AS (
             SELECT 
                 h3_index,
-                specieskey,
+                species,
                 year,
                 COUNT(*) as record_count,
                 LIST(DISTINCT datasetkey) as dataset_keys
             FROM inp
             WHERE h3_index IS NOT NULL
-            GROUP BY h3_index, specieskey, year
+            GROUP BY h3_index, species, year
         ),
         aggregated_data AS (
             SELECT 
                 h3_h3_to_string(h3_index) as H3,
-                specieskey,
+                species,
                 year,
                 record_count,
                 dataset_keys
