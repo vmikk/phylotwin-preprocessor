@@ -741,6 +741,16 @@ workflow atomic_tasks {
   // Phylogenetic trees
   ch_phylotrees = Channel.fromList(phylo_trees)
 
+  // Filter out missing files
+  ch_phylotrees = ch_phylotrees.filter { name, file1, file2 ->  
+    def file2_obj = file(file2)
+    def exists = file2_obj.exists()
+    if (!exists) {
+        println "Record removed: $name (missing file: $file2)"
+    }
+    return exists
+  }
+
   // Combine phylogenetic trees and occurrence counts
   // tuple(taxon, phylotree_initial, phylotree_processed, occ_counts_csv)
   ch_phylo_occ = ch_phylotrees.combine(count_occurrences.out.occ_counts_csv)
