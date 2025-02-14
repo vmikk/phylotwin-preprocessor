@@ -466,22 +466,23 @@ process count_outliers {
 // NB. Scores from `DBSCANOutlierDetection` are binary!
 process process_dbscan {
 
-    tag "${specieskey}"
+    tag "${species}"
 
     input:
-      tuple val(specieskey), path(dbscan_scores), path(occ)
+      tuple val(species), path(dbscan_scores), path(occ)
 
     output:
-      tuple val("${specieskey}"), path("${specieskey}.parquet"), path("${specieskey}.txt"), emit: nooutliers
+      tuple val("${species}"), path("*.parquet"), path("*.txt"), emit: nooutliers
 
     script:
     def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
     def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
+    def normalized_species = species.replaceAll(/[^a-zA-Z0-9]+/, '_')
     """
     echo -e "Processing DBSCAN results\n"
-    echo "Species key: " ${specieskey}
+    echo "Species: " ${species}
     if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
     if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
     echo "Container engine: " ${workflow.containerEngine}
@@ -490,15 +491,15 @@ process process_dbscan {
       -i ${occ}'/*' \
       -w ${dbscan_scores} \
       -r ${params.outlier_h3_resolution} \
-      -o ${specieskey}.parquet \
-      -s ${specieskey} \
+      -o "${normalized_species}.parquet" \
+      -s "${species}" \
       -t ${task.cpus} \
       ${memoryArg} ${tempDirArg} \
       ${basisOfRecordArg} \
       ${duckdbArg}
 
-    ## For compatibility with low-occurrence species, we need a file with species keys
-    echo ${specieskey} > "${specieskey}.txt"
+    ## For compatibility with low-occurrence species, we need a file with species names
+    echo ${species} > "${normalized_species}.txt"
 
     if [ ${params.cleanupwd} == true ]; then
       echo "Cleaning up"
