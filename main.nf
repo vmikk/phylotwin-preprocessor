@@ -19,16 +19,31 @@
 // List of phylogenetic trees
 // NB. taxon names (first element of tuple) should be unique
 phylo_trees = [
-    tuple("Plants",      "${params.t1}/Tietje_2023_Seed_plants_TACT.tre.gz",  "${params.t2}/Tietje_2023_Seed_plants_TACT.nwk"),
-    tuple("Ferns",       "${params.t1}/FTOL_1-7-0_sanger_con_dated.tre.gz",   "${params.t2}/Ferns_FTOL_1-7-0.nwk"),
-    tuple("Mushrooms",   "${params.t1}/Varga_2019_Mushrooms.tre.gz",          "${params.t2}/Varga_2019_Mushrooms.nwk"),
-    tuple("Mammals",     "${params.t1}/VertLife_Mammals.tre.gz",              "${params.t2}/VertLife_Mammals.nwk"),
-    tuple("Birds",       "${params.t1}/VertLife_Birds.tre.gz",                "${params.t2}/VertLife_Birds.nwk"),
-    tuple("Squamates",   "${params.t1}/VertLife_Squamates.tre.gz",            "${params.t2}/VertLife_Squamates.nwk"),
-    tuple("Amphibians",  "${params.t1}/VertLife_Amphibians.tre.gz",           "${params.t2}/VertLife_Amphibians.nwk"),
-    tuple("Fish",        "${params.t1}/FishTree_actinopt_12k_treePL.tre.xz",  "${params.t2}/FishTree.nwk"),
-    tuple("Butterflies", "${params.t1}/Kawahara_2023_Butterflies_Newick.tre",          "${params.t2}/Kawahara_2023_Butterflies.nwk"),
-    tuple("Bees",        "${params.t1}/Henriquez-Piskulich_2024_BeetreeOfLife.tre.gz", "${params.t2}/Henriquez-Piskulich_2024_BeetreeOfLife.nwk"),
+
+    // Curated trees
+    tuple("Plants",      "${params.t1}/Tietje_2023_Seed_plants_TACT.tre.gz",           "${params.t2}/Tietje_2023_Seed_plants_TACT.nex.gz"),
+    tuple("Ferns",       "${params.t1}/FTOL_1-7-0_sanger_con_dated.tre.gz",            "${params.t2}/Ferns_FTOL_1-7-0.nex.gz"),
+    tuple("Mushrooms",   "${params.t1}/Varga_2019_Mushrooms.tre.gz",                   "${params.t2}/Varga_2019_Mushrooms.nex.gz"),
+    tuple("Mammals",     "${params.t1}/VertLife_Mammals.tre.gz",                       "${params.t2}/VertLife_Mammals.nex.gz"),
+    tuple("Birds",       "${params.t1}/VertLife_Birds.tre.gz",                         "${params.t2}/VertLife_Birds.nex.gz"),
+    tuple("Squamates",   "${params.t1}/VertLife_Squamates.tre.gz",                     "${params.t2}/VertLife_Squamates.nex.gz"),
+    tuple("Amphibians",  "${params.t1}/VertLife_Amphibians.tre.gz",                    "${params.t2}/VertLife_Amphibians.nex.gz"),
+    tuple("Fish",        "${params.t1}/FishTree_actinopt_12k_treePL.tre.gz",           "${params.t2}/FishTree.nex.gz"),
+    tuple("Butterflies", "${params.t1}/Kawahara_2023_Butterflies_Newick.tre.gz",       "${params.t2}/Kawahara_2023_Butterflies.nex.gz"),
+    tuple("Bees",        "${params.t1}/Henriquez-Piskulich_2024_BeetreeOfLife.tre.gz", "${params.t2}/Henriquez-Piskulich_2024_BeetreeOfLife.nex.gz"),
+
+    // Synthetic trees from Open Tree of Life
+    tuple("OTT_Aves",       "${params.t1}/OTL_Aves-1.3.nwk.gz",          "${params.t2}/OTL_Aves-1.3.nex.gz"),
+    // NB. For the following synthetic trees, there are no initial trees, only processed trees
+    tuple("OTT_Bryophyta",  "${params.t2}/OTT_v15.1__Bryophyta.nex.gz",  "${params.t2}/OTT_v15.1__Bryophyta.nex.gz"),
+    tuple("OTT_Arthropoda", "${params.t2}/OTT_v15.1__Arthropoda.nex.gz", "${params.t2}/OTT_v15.1__Arthropoda.nex.gz"),
+    tuple("OTT_Chordata",   "${params.t2}/OTT_v15.1__Chordata.nex.gz",   "${params.t2}/OTT_v15.1__Chordata.nex.gz"),
+    tuple("OTT_Annelida",   "${params.t2}/OTT_v15.1__Annelida.nex.gz",   "${params.t2}/OTT_v15.1__Annelida.nex.gz"),
+    tuple("OTT_Mollusca",   "${params.t2}/OTT_v15.1__Mollusca.nex.gz",   "${params.t2}/OTT_v15.1__Mollusca.nex.gz"),
+    tuple("OTT_Nematoda",   "${params.t2}/OTT_v15.1__Nematoda.nex.gz",   "${params.t2}/OTT_v15.1__Nematoda.nex.gz"),
+    tuple("OTT_Cnidaria",   "${params.t2}/OTT_v15.1__Cnidaria.nex.gz",   "${params.t2}/OTT_v15.1__Cnidaria.nex.gz"),
+    tuple("OTT_Fungi",      "${params.t2}/OTT_v15.1__Fungi.nex.gz",      "${params.t2}/OTT_v15.1__Fungi.nex.gz"),
+
 ]
 
 // GTDB_ar53_r220.tre.gz
