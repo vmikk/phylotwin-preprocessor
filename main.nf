@@ -575,7 +575,7 @@ process filter_and_bin {
       tuple val(name), path(occ), path(spp)
 
     output:
-      path "${name}_filtered.parquet", emit: aggregated
+      path "*_filtered.parquet", emit: aggregated
 
     script:
     // Check if input is a directory (raw data for low-occurrence species)
@@ -586,12 +586,13 @@ process filter_and_bin {
     def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
+    def normalized_species = name.replaceAll(/[^a-zA-Z0-9]+/, '_')
     """
     echo -e "Filtering and binning GBIF records\n"
 
     echo "Species occurrences: " ${inp}
-    echo "Species keys: "        ${name}
-    echo "Output file: "         ${name}_filtered.parquet
+    echo "Species: "             ${name}
+    echo "Output file: "         ${normalized_species}_filtered.parquet
     echo "H3 resolution: "       ${params.h3_resolution}
     if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
     if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
@@ -600,7 +601,7 @@ process filter_and_bin {
     filter_and_bin.sh \
       -i ${inp} \
       -s ${spp} \
-      -o ${name}_filtered.parquet \
+      -o ${normalized_species}_filtered.parquet \
       -r ${params.h3_resolution} \
       -t ${task.cpus} \
       ${memoryArg} ${tempDirArg} \
