@@ -68,7 +68,7 @@ while getopts "i:o:w:r:s:b:t:m:x:e:z:" opt; do
 done
 
 ## Validate required input parameters
-if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$OUTLIER_SCORES" || -z "$SPECIES" ]]; then
+if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$OUTLIER_SCORES" ]]; then
     echo -e "Error: Missing required parameters!\n"
     usage
 fi
@@ -83,6 +83,11 @@ fi
 if [[ ! -e "$OUTLIER_SCORES" ]]; then
     echo -e "Error: Outlier scores file not found!\n"
     usage
+fi
+
+## If species is not provided, use the first species in the outlier scores file
+if [[ -z "$SPECIES" ]]; then
+    SPECIES=$(zcat "$OUTLIER_SCORES" | head -n 1 | cut -f2)
 fi
 
 ## Validate species key -- deprecated
