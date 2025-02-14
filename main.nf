@@ -324,22 +324,25 @@ echo -e "\n..All done"
 process dbscan {
     // cpus 2
 
-    tag "${specieskey}"
+    tag "${species}"
 
     input:
-      tuple val(specieskey), path(h3_binned_csv)
+      tuple val(species), path(h3_binned_csv)
 
     output:
-      tuple val(specieskey), path("${specieskey}.DBSCAN-outliers.txt.gz"), emit: dbscan_scores
+      tuple val(species), path("*.DBSCAN-outliers.txt.gz"), emit: dbscan_scores
 
     script:
     """
     echo -e "Detecting spatial outliers using DBSCAN\n"
-    echo "Species key: "    ${specieskey}
+    echo "Species: "    ${species}
+
+    ## Normalize species name for file naming
+    normalized_species=\$(echo "${species}" | sed 's/[^[:alnum:]]/_/g')
 
     elki_outlier.sh \
       --input  ${h3_binned_csv} \
-      --output ${specieskey}_DBSCAN-scores.txt.gz \
+      --output "\${normalized_species}_DBSCAN-scores.txt.gz" \
       --method DBSCANOutlierDetection \
       --geomodel WGS84SpheroidEarthModel \
       --indextype RStarTree \
@@ -351,14 +354,14 @@ process dbscan {
 
     ## Merge H3 cell IDs and scores
     paste \
-      <(zcat "${h3_binned_csv}" | cut -d',' -f3) \
-      <(zcat "${specieskey}_DBSCAN-scores.txt.gz" | cut -d' ' -f2) \
+      <(zcat "${h3_binned_csv}" | cut -d',' -f3-4 | sed 's/,/\t/g') \
+      <(zcat "\${normalized_species}_DBSCAN-scores.txt.gz" | cut -d' ' -f2) \
       | gzip -3 \
-      > "${specieskey}.DBSCAN-outliers.txt.gz"
+      > "\${normalized_species}.DBSCAN-outliers.txt.gz"
 
     if [ ${params.cleanupwd} == true ]; then
       echo "Cleaning up"
-      rm "${specieskey}_DBSCAN-scores.txt.gz"
+      rm "\${normalized_species}_DBSCAN-scores.txt.gz"
       rm "${h3_binned_csv}"
     fi
 
