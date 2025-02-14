@@ -772,7 +772,7 @@ workflow atomic_tasks {
   // Run outlier removal for "large" species
   if (params.nodbscan == false) {
 
-    // Channel with species keys for spatial outlier removal
+    // Channel with species for spatial outlier removal
     // NB. results returned by `splitText` operator are always terminated by a `\n` newline character, so we need to trim it
     ch_large_species = pool_species_lists.out.occ_large
       .splitText()
@@ -786,7 +786,7 @@ workflow atomic_tasks {
     dbscan(prepare_species.out.h3_binned_csv)
 
     // Add raw occurrence path to the channel with DBSCAN scores
-    // tuple(specieskey, dbscan_scores, occurrence_path)
+    // tuple(species, dbscan_scores, occurrence_path)
     dbscan.out.dbscan_scores
       .combine(ch_occurrence_dir)
       .set { ch_dbscan_scores }
@@ -802,12 +802,12 @@ workflow atomic_tasks {
   
     count_outliers(ch_all_scores)
 
-    // Data for low-occurrence filtering   tuple("low", raw_data, low_occ_specieskeys )
+    // Data for low-occurrence filtering   tuple("low", raw_data, low_occ_species )
     ch_occurrence_dir
       .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
       .set { ch_spk_low }
 
-    // Data for large-occurrence filtering   tuple( specieskey, outlier_removed_data, large_occ_specieskey )
+    // Data for large-occurrence filtering   tuple( species, outlier_removed_data, large_occ_species )
     ch_spk_large = process_dbscan.out.nooutliers
 
     ch_spk_low
@@ -827,8 +827,8 @@ workflow atomic_tasks {
       .merge(pool_species_lists.out.occ_large) { occ, spp -> tuple("large", occ, spp) }
       .set { ch_spk_large }
 
-    // tuple("low",   raw_data, low_occ_specieskeys )
-    // tuple("large", raw_data, large_occ_specieskeys )
+    // tuple("low",   raw_data, low_occ_species )
+    // tuple("large", raw_data, large_occ_speciess )
 
     ch_spk_low
       .concat(ch_spk_large)
