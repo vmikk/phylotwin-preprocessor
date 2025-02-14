@@ -211,6 +211,11 @@ process pool_species_lists {
     script:
     def extinctArg = extinct_taxa ? "--extinct ${extinct_taxa}" : ''
     """
+    echo -e "Pooling species lists\n"
+
+    echo "Occurrence counts: " ${occurrence_counts}
+    echo "Extinct taxa: "      ${extinct_taxa}
+
     pool_occurrence_counts.R \
       --inpdir        occ_counts/ \
       --output_large  Occurrences_large.txt \
