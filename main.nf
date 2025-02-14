@@ -673,22 +673,17 @@ process filter_and_bin_batched {
     if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
     echo "Container engine: "    ${workflow.containerEngine}
 
-    ## Create files with species keys (for compatibility with low-occurrence species filtering)
-    mkdir -p spkeys
-    find flt -name '*.parquet' \
-      | parallel -j1 --halt now,fail=1 \
-        --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
-        "echo {/:} > spkeys/{/:}.txt"
+    # Notes: species file parameter (`-s`) is not provided to the `filter_and_bin.sh`,
+    # so the list of species will be created taken from an input parquet file
 
     ## Filter and bin occurrences
     mkdir -p binned
     find flt -name '*.parquet' \
       | parallel -j1 --halt now,fail=1 \
-        --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
+        --rpl '{fname} s:^.*/:: ; s/.DBSCAN-outliers.parquet//' \
         "filter_and_bin.sh \
           -i {} \
-          -s spkeys/{/:}.txt \
-          -o binned/{/:}.parquet \
+          -o binned/{fname}.parquet \
           -r ${params.h3_resolution} \
           -t ${task.cpus} \
           ${memoryArg} ${tempDirArg} \
@@ -698,9 +693,9 @@ process filter_and_bin_batched {
     ## Clean up
     if [ ${params.cleanupwd} == true ]; then
       echo -e "\nFiltering and binning finished. Cleaning up\n"
-      rm -r spkeys
       rm -r flt
-      rm -r binned/*.sql
+      rm binned/*.sql
+      rm binned/*__species_names.txt
     fi
 
     echo -e "\n..All done\n"
