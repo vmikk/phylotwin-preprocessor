@@ -878,6 +878,16 @@ workflow task_batching {
   // Phylogenetic trees
   ch_phylotrees = Channel.fromList(phylo_trees)
 
+  // Filter out missing files
+  ch_phylotrees = ch_phylotrees.filter { name, file1, file2 ->  
+    def file2_obj = file(file2)
+    def exists = file2_obj.exists()
+    if (!exists) {
+        println "Record removed: $name (missing file: $file2)"
+    }
+    return exists
+  }
+
   // Collect phylogenetic trees into a table (since trees can be named in non-regular way)
   ch_phylotrees
     .map { tuple -> tuple.join('\t') }
