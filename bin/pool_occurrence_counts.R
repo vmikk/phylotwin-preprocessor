@@ -35,7 +35,7 @@ option_list <- list(
         help = "Output file with a list of species with small number of occurrences"),
     make_option(c("-e", "--extinct"),
         type = "character", default = NULL,
-        help = "Extinct species list (optional); text file with specieskeys in the first column, with header")
+        help = "Extinct species list (optional); text file with species names in the first column, with header")
 )
 
 ## Parse the command line arguments
@@ -88,25 +88,25 @@ if(!is.null(EXTINCT)){
 
 cat("\nKeeping only unique species\n")
 
-occ_large <- unique(occ_large, by = "specieskey")
-occ_small <- unique(occ_small, by = "specieskey")
+occ_large <- unique(occ_large, by = "species")
+occ_small <- unique(occ_small, by = "species")
 
-cat("Number of unique specieskeys [large]:", nrow(occ_large), "\n")
-cat("Number of unique specieskeys [small]:", nrow(occ_small), "\n")
+cat("Number of unique species [large]:", nrow(occ_large), "\n")
+cat("Number of unique species [small]:", nrow(occ_small), "\n")
 
 if(!is.null(EXTINCT)){
   cat("\nRemoving extinct species\n")
-  occ_large <- occ_large[ !specieskey %in% extinct$specieskey ]
-  occ_small <- occ_small[ !specieskey %in% extinct$specieskey ]
+  occ_large <- occ_large[ !species %in% extinct$species ]
+  occ_small <- occ_small[ !species %in% extinct$species ]
 
-  cat("..Number of unique specieskeys after removing extinct [large]:", nrow(occ_large), "\n")
-  cat("..Number of unique specieskeys after removing extinct [small]:", nrow(occ_small), "\n")
+  cat("..Number of unique species after removing extinct [large]:", nrow(occ_large), "\n")
+  cat("..Number of unique species after removing extinct [small]:", nrow(occ_small), "\n")
 }
 
-setorder(occ_large, specieskey)
-setorder(occ_small, specieskey)
+setorder(occ_large, species)
+setorder(occ_small, species)
 
 cat("\nExporting results\n")
 
-fwrite(x = occ_large[, .(specieskey) ], file = OUTPUT_LARGE, sep = "\t", row.names = FALSE, col.names = FALSE)
-fwrite(x = occ_small[, .(specieskey) ], file = OUTPUT_SMALL, sep = "\t", row.names = FALSE, col.names = FALSE)
+fwrite(x = occ_large[, .(species) ], file = OUTPUT_LARGE, sep = "\t", row.names = FALSE, col.names = FALSE)
+fwrite(x = occ_small[, .(species) ], file = OUTPUT_SMALL, sep = "\t", row.names = FALSE, col.names = FALSE)
