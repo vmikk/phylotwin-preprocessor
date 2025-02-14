@@ -283,7 +283,7 @@ process prepare_species {
 process prepare_species_batched {
 
     input:
-      tuple val(specieskeys), path(occurrences)
+      tuple val(species), path(occurrences)
 
     output:
       path("prepare_species/*.csv.gz"),  emit: h3_binned_csv
@@ -301,27 +301,28 @@ echo "Species occurrences: " ${occurrences}
 echo "H3 resolution: " ${params.outlier_h3_resolution}
 
 echo -e "\n"
-echo "Species keys: ${specieskeys}"
+echo "Species: ${species}"
 echo -e "\n"
 
 if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
 if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
 echo "Container engine: " ${workflow.containerEngine}
 
-echo "..Writing species keys to file"
+echo "..Writing species to file"
 cat << EOF > ids
-${specieskeys.join("\n")}
+${species.join("\n")}
 EOF
 
 mkdir -p prepare_species
 
-echo "..Processing species keys"
+echo "..Processing species"
 parallel -j1 -a ids --halt now,fail=1 \
+  --rpl '{normalized_species} s/[^[:alnum:]]/_/g' \
   "echo {} && \
   h3_preprocessor.sh \
     -i ${occurrences}'/*' \
     -s {} \
-    -o prepare_species/{}.parquet \
+    -o prepare_species/{normalized_species}.parquet \
     -r ${params.outlier_h3_resolution} \
     -t ${task.cpus} \
     ${memoryArg} ${tempDirArg} \
