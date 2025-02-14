@@ -15,6 +15,9 @@
 //   --h3_resolution 4 \
 //   --userid "user"
 
+// Warnings:
+// - In species names, tabs and commas are not allowed
+
 
 // List of phylogenetic trees
 // NB. taxon names (first element of tuple) should be unique
