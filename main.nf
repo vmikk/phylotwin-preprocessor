@@ -212,26 +212,27 @@ process pool_species_lists {
 // Prepare data for spatial outlier removal (atomic, per species)
 process prepare_species {
 
-    tag "${specieskey}"
+    tag "${species}"
 
     input:
-      tuple val(specieskey), path(occurrences)
+      tuple val(species), path(occurrences)
 
     output:
-      tuple val(specieskey), path("${specieskey}.csv.gz"),  emit: h3_binned_csv
-      path("${specieskey}.parquet"),                        emit: h3_binned
+      tuple val(species), path("*.csv.gz"),  emit: h3_binned_csv
+      path("*.parquet"),                     emit: h3_binned
 
     script:
     def tempDirArg = task.ext.tempDir ? "-x ${task.ext.tempDir}" : ""
     def memoryArg  = task.memory  ? "-m ${task.memory.toMega()}.MB" : ""
     def basisOfRecordArg = params.basis_of_record ? "-b ${params.basis_of_record}" : ""
     def duckdbArg = (workflow.containerEngine == 'singularity') ? '-e "/usr/local/bin/duckdb_ext"' : ''
+    def normalized_species = species.replaceAll(/[^a-zA-Z0-9]+/, '_')
     """
     echo -e "Preparing data for spatial outlier removal\n"
 
     echo "Species occurrences: " ${occurrences}
-    echo "Species key: "         ${specieskey}
-    echo "Output file: "         ${specieskey}.parquet
+    echo "Species name: "        ${species}
+    echo "Output file: "         ${normalized_species}.parquet
     echo "H3 resolution: "       ${params.outlier_h3_resolution}
     if [ -n "${task.memory}"  ];     then echo "Memory: ${memoryArg}";          fi
     if [ -n "${task.ext.tempDir}" ]; then echo "Temp directory: ${tempDirArg}"; fi
@@ -239,8 +240,8 @@ process prepare_species {
 
     h3_preprocessor.sh \
       -i ${occurrences}'/*' \
-      -s ${specieskey} \
-      -o ${specieskey}.parquet \
+      -s "${species}" \
+      -o "${normalized_species}.parquet" \
       -r ${params.outlier_h3_resolution} \
       -t ${task.cpus} \
       ${memoryArg} ${tempDirArg} \
