@@ -104,31 +104,20 @@ PRAGMA temp_directory='${TEMP_DIR}';
 fi
 
 SQL_COMMAND+="
-CREATE TEMPORARY TABLE tbl AS SELECT * FROM read_csv('/dev/stdin',
+CREATE TEMPORARY TABLE tbl AS SELECT * FROM 
+    read_csv('${INPUT_DIR}/*.txt.gz',
       auto_detect = false,
       header = false,
       delim = '\t',
       columns = {
-        'SpeciesKey':   'BIGINT',
         'H3Index':      'VARCHAR',
+        'Species':      'VARCHAR',
         'OutlierScore': 'DOUBLE'
       });
-     COPY tbl TO '${OUTPUT_FILE}' (HEADER, DELIMITER '\t', COMPRESSION 'gzip');
+    COPY tbl TO '${OUTPUT_FILE}' (HEADER, DELIMITER '\t', COMPRESSION 'gzip');
 "
 
-## Function to add species key as the first column
-add_specieskey() {
-  zcat "$1" | awk -v id="$2" 'BEGIN { OFS="\t" } { print id, $0 }'
-}
-export -f add_specieskey
-
-## Process all files in the input directory
-find "${INPUT_DIR}" -name "*.txt.gz" \
-  | parallel \
-    -j 1 \
-    --rpl '{/:} s:(.*/)?([^/.]+)(\.[^/]+)*$:$2:' \
-    "add_specieskey {} {/:}" \
-  | duckdb :memory: "${SQL_COMMAND}"
+duckdb -c "${SQL_COMMAND}"
 
 echo -e "..Done\n"
 
@@ -165,8 +154,8 @@ CREATE TABLE inp AS SELECT * FROM read_csv('${OUTPUT_FILE}',
       delim = '\t', 
       header = true,
       columns = {
-        'SpeciesKey':   'BIGINT',
         'H3Index':      'VARCHAR',
+        'Species':      'VARCHAR',
         'OutlierScore': 'DOUBLE'
       });
 
@@ -180,7 +169,7 @@ CREATE TEMP TABLE summary AS (
     SELECT 'Unique_H3_cells', CAST(COUNT(DISTINCT H3Index) AS VARCHAR)
     FROM inp
     UNION ALL
-    SELECT 'Unique_species', CAST(COUNT(DISTINCT SpeciesKey) AS VARCHAR)
+    SELECT 'Unique_species', CAST(COUNT(DISTINCT Species) AS VARCHAR)
     FROM inp
     UNION ALL
 
@@ -193,10 +182,10 @@ CREATE TEMP TABLE summary AS (
     -- Average number of outliers per species
     SELECT 'Average_number_of_outliers_per_species', CAST(ROUND(AVG(column_count), 3) AS VARCHAR)
     FROM (
-        SELECT SpeciesKey, COUNT(*) AS column_count
+        SELECT Species, COUNT(*) AS column_count
         FROM inp
         WHERE OutlierScore > ${THRESHOLD}
-        GROUP BY SpeciesKey
+        GROUP BY Species
     ) t
     UNION ALL
 
