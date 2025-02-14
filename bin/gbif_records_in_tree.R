@@ -41,10 +41,10 @@ option_list <- list(
         help = "Input - GBIF record summary per species (TSV format)"),
     make_option(c("-t", "--tree"),
         type = "character", default = NULL,
-        help = "Input - Tree (Newick format)"),
+        help = "Input - Tree (Nexus format)"),
     make_option(c("-s", "--sourcetree"),
         type = "character", default = NULL,
-        help = "Input - Initial tree, before species name matching (Newick format), optional"),
+        help = "Input - Initial tree, before species name matching (Nexus format), optional"),
     make_option(c("-o", "--outputstats"),
         type = "character", default = NULL,
         help = "Output file with summary statistics (TSV format)"),
@@ -53,10 +53,10 @@ option_list <- list(
         help = "Threshold for the number of occurrences"),
     make_option(c("-L", "--output_large_occ"),
         type = "character", default = NULL,
-        help = "Output file with a list of species keys with large number of occurrences (TSV format)"),
+        help = "Output file with a list of species with large number of occurrences (TSV format)"),
     make_option(c("-l", "--output_low_occ"),
         type = "character", default = NULL,
-        help = "Output file with a list of species keys with low number of occurrences (TSV format)"),
+        help = "Output file with a list of species with low number of occurrences (TSV format)"),
     make_option(c("-v", "--verbose"),
         action = "store_true", default = TRUE,
         help = "Print verbose output")
@@ -81,42 +81,62 @@ cat("..Phylogenetic tree:", TREE, "\n")
 cat("..Initial tree:", SOURCETREE, "\n")
 cat("..Output with summary statistics:", OUTPUTSTATS, "\n")
 cat("..Occurrence threshold:", OCC_THRESHOLD, "\n")
-cat("..Output with a list of species keys with large number of occurrences:", OUTPUT_LARGE_OCC, "\n")
-cat("..Output with a list of species keys with low number of occurrences:", OUTPUT_LOW_OCC, "\n")
+cat("..Output with a list of species with large number of occurrences:", OUTPUT_LARGE_OCC, "\n")
+cat("..Output with a list of species with low number of occurrences:", OUTPUT_LOW_OCC, "\n")
 cat("..Verbose:", VERBOSE, "\n")
 
 ## Load GBIF records
 cat("\nLoading GBIF record summary\n")
 CNT <- fread(file = GBIF, sep = "\t")     # count of the number of records per species
 
-## Load phylogenetic tree
-cat("Loading phylogenetic tree\n")
-TRE <- read.tree(file = TREE)
+## Function to load phylogenetic tree
+load_tree <- function(tree_file){
+  ## Check if file is gzip-compressed and get the base file name
+  is_gz <- grepl("\\.gz$", tree_file, ignore.case = TRUE)
+  base_file <- if (is_gz) sub("\\.gz$", "", tree_file, ignore.case = TRUE) else tree_file
+  
+  ## Extract the file extension (in lower case)
+  ext <- tolower(tools::file_ext(base_file))
+
+  ## Load tree in Nexus format
+  if (ext %in% c("nex", "nexus")) {
+    TRE <- ape::read.nexus(file = tree_file)
+  } else if (ext %in% c("tre", "nwk", "newick")) {
+    TRE <- ape::read.tree(file = tree_file)
+  } else {
+    stop("Unsupported file extension: ", ext)
+  }
+  return(TRE)
+}
+
+## Load processed tree
+cat("Loading processed tree\n")
+TRE <- load_tree(tree_file = TREE)
 
 ## Load initial tree
 if(! is.null(SOURCETREE)){
   cat("Loading initial tree (prior to species name matching)\n")
-  TRE0 <- read.tree(file = SOURCETREE)
+  TRE0 <- load_tree(tree_file = SOURCETREE)
 }
 
 ## Parse species names and GBIF specieskeys
 SPP <- data.table(TipLabel = TRE$tip.label)
-SPP[ , c("SpeciesKey", "Species") := tstrsplit(x = TipLabel, split = "___", keep = 1:2) ]
+SPP[ , "Species" := sub(pattern = "_", replacement = " ", x = TipLabel) ]
 
 ## Subset the GBIF records to the species in the tree
-CNTS <- CNT[ specieskey %in% SPP$SpeciesKey ]
+CNTS <- CNT[ species %in% SPP$Species ]
 
 ## Summary
 RES <- data.table(
   Tree                       = basename(TREE),
-  SpeciesInTree              = nrow(SPP),                                   # species that passed name matching and are in the tree
-  SpeciesInGBIF              = nrow(CNTS),                                  # species that passed name matching and have occurrences in GBIF
-  SpeciesNotInGBIF           = sum(! SPP$SpeciesKey %in% CNT$specieskey),   # species that passed name matching but are not in GBIF occurrences
+  SpeciesInTree              = nrow(SPP),                             # species that passed name matching and are in the tree
+  SpeciesInGBIF              = nrow(CNTS),                            # species that passed name matching and have occurrences in GBIF
+  SpeciesNotInGBIF           = sum(! SPP$Species %in% CNT$species),   # species that passed name matching but are not in GBIF occurrences
   NumUniqueOccurrences       = sum(CNTS$NumRecords),
   NumNonRedundantOccurrences = sum(CNTS$NumUniqCoordsRounded2dp) )
 
 ## Estimate percentages
-RES[ , Pct_SpeciesInGBIF    := round(SpeciesInGBIF / SpeciesInTree * 100, digits = 2) ]
+RES[ , Pct_SpeciesInGBIF    := round(SpeciesInGBIF    / SpeciesInTree * 100, digits = 2) ]
 RES[ , Pct_SpeciesNotInGBIF := round(SpeciesNotInGBIF / SpeciesInTree * 100, digits = 2) ]
 
 setcolorder(x = RES, neworder = c(
@@ -183,11 +203,11 @@ if(! is.null(OCC_THRESHOLD)){
 
   ## Save the results 
   if(! is.null(OUTPUT_LARGE_OCC)){
-    fwrite(x = CNTS[ OccGroup == "Large", .(specieskey, OccGroup, NumUniqCoordsRounded2dp) ], file = OUTPUT_LARGE_OCC, sep = "\t")
+    fwrite(x = CNTS[ OccGroup == "Large", .(species, OccGroup, NumUniqCoordsRounded2dp) ], file = OUTPUT_LARGE_OCC, sep = "\t")
   }
 
   if(! is.null(OUTPUT_LOW_OCC)){
-    fwrite(x = CNTS[ OccGroup == "Small", .(specieskey, OccGroup, NumUniqCoordsRounded2dp) ], file = OUTPUT_LOW_OCC, sep = "\t")
+    fwrite(x = CNTS[ OccGroup == "Small", .(species, OccGroup, NumUniqCoordsRounded2dp) ], file = OUTPUT_LOW_OCC, sep = "\t")
   }
 
 }
