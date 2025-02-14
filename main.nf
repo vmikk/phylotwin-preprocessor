@@ -410,11 +410,11 @@ echo "..Processing species occurrences"
 mkdir -p dbs
 find inp -name '*.csv.gz' \
   | parallel -j1 --halt now,fail=1 \
-    --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
+    --rpl '{fname} s:^.*/:: ; s/.csv.gz//' \
     "echo {} && \
     elki_outlier.sh \
       --input  {} \
-      --output dbs/{/:}_DBSCAN-scores.txt.gz \
+      --output dbs/{fname}_DBSCAN-scores.txt.gz \
       --method DBSCANOutlierDetection \
       --geomodel WGS84SpheroidEarthModel \
       --indextype RStarTree \
@@ -424,23 +424,23 @@ find inp -name '*.csv.gz' \
 echo "ELKI finished"
 echo "Merging H3 cell IDs and scores"
 
-## Merge SpeciesKey, H3 cell IDs, and scores
+## Merge H3 cell ID, species name, and outlier scores
 mkdir -p mrg
 find inp -name '*.csv.gz' \
   | parallel -j1 --halt now,fail=1 \
-    --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
+    --rpl '{fname} s:^.*/:: ; s/.csv.gz//' \
     "echo {} && \
     paste \
-      <(zcat "{}" | cut -d',' -f3) \
-      <(zcat "dbs/{/:}_DBSCAN-scores.txt.gz" | cut -d' ' -f2) \
+      <(zcat "{}" | cut -d',' -f3-4 | sed 's/,/\t/g') \
+      <(zcat "dbs/{fname}_DBSCAN-scores.txt.gz" | cut -d' ' -f2) \
       | gzip -3 \
-      > mrg/{/:}.DBSCAN-outliers.txt.gz"
+      > mrg/{fname}.DBSCAN-outliers.txt.gz"
 
 ## Clean up
 if [ ${params.cleanupwd} == true ]; then
   echo "Cleaning up"
   rm -r inp
-  rm -r dbs/*DBSCAN-scores.txt.gz
+  rm -r dbs
 fi
 
 echo -e "\n..All done"
