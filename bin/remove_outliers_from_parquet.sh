@@ -6,7 +6,7 @@
 #   -o '/path/to/output.parquet' \
 #   -w 'ELKI_outlier_scores.txt.gz' \
 #   -r 6 \
-#   -s 2495667 \
+#   -s "Anchoa_mitchilli" \
 #   -b "PRESERVED_SPECIMEN,MATERIAL_CITATION,MACHINE_OBSERVATION"
 
 ## NB!
@@ -14,19 +14,19 @@
 #   (threshold is hard-coded to 0.5)
 
 ## Main workflow:
-# - filter records using the `specieskey` column
+# - filter records using the `species` column
 # - optionally filter records using the `basis_of_record` column
 # - exclude occurrences from H3 cell identified as outliers
 
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -w OUTLIER_SCORES -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR] [-z COMPRESSION]"
-    echo "  -i INPUT_FILE      : Input Parquet file path"
+    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -w OUTLIER_SCORES -s SPECIES [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-e EXT_DIR] [-z COMPRESSION]"
+    echo "  -i INPUT_FILE      : Input Parquet file path (or directory with multiple files)"
     echo "  -o OUTPUT_FILE     : Output Parquet file path"
     echo "  -w OUTLIER_SCORES  : Tab-delimited file with H3 cell IDs and outlier scores"
     echo "  -r H3_RESOLUTION   : H3 resolution (0-15)"
-    echo "  -s SPECIESKEY      : Species key for filtering"
+    echo "  -s SPECIES         : Species for filtering"
     echo "  -b BASIS_OF_RECORD : Comma-separated list of basis of record values to include (optional)"
     echo "  -t THREADS         : Number of CPU threads to use (optional)"
     echo "  -m MEMORY          : Memory limit (e.g., '100GB') (optional)"
@@ -41,7 +41,7 @@ INPUT_FILE=""
 OUTPUT_FILE=""
 OUTLIER_SCORES=""
 H3_RESOLUTION=""
-SPECIES_KEY=""
+SPECIES=""
 BASIS_OF_RECORD=""
 THREADS=""
 MEMORY=""
@@ -56,7 +56,7 @@ while getopts "i:o:w:r:s:b:t:m:x:e:z:" opt; do
         o) OUTPUT_FILE="$OPTARG" ;;
         w) OUTLIER_SCORES="$OPTARG" ;;
         r) H3_RESOLUTION="$OPTARG" ;;
-        s) SPECIES_KEY="$OPTARG" ;;
+        s) SPECIES="$OPTARG" ;;
         b) BASIS_OF_RECORD="$OPTARG" ;;
         t) THREADS="$OPTARG" ;;
         m) MEMORY="$OPTARG" ;;
@@ -67,21 +67,29 @@ while getopts "i:o:w:r:s:b:t:m:x:e:z:" opt; do
     esac
 done
 
-## Validate input parameters
-if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$OUTLIER_SCORES" || -z "$SPECIES_KEY" ]]; then
+## Validate required input parameters
+if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$OUTLIER_SCORES" || -z "$SPECIES" ]]; then
     echo -e "Error: Missing required parameters!\n"
     usage
 fi
 
+## Check that H3 resolution is a valid integer between 0 and 15
 if ! [[ "$H3_RESOLUTION" =~ ^[0-9]+$ ]] || [ "$H3_RESOLUTION" -lt 0 ] || [ "$H3_RESOLUTION" -gt 15 ]; then
     echo -e "Error: H3 resolution must be an integer between 0 and 15!\n"
     usage
 fi
 
-if ! [[ "$SPECIES_KEY" =~ ^[0-9]+$ ]]; then
-    echo -e "Error: Species key must be a positive integer!\n"
+## Check if outlier scores file exists
+if [[ ! -e "$OUTLIER_SCORES" ]]; then
+    echo -e "Error: Outlier scores file not found!\n"
     usage
 fi
+
+## Validate species key -- deprecated
+# if ! [[ "$SPECIES_KEY" =~ ^[0-9]+$ ]]; then
+#     echo -e "Error: Species key must be a positive integer!\n"
+#     usage
+# fi
 
 ## Threads should be a positive integer
 if [[ -n "$THREADS" && "$THREADS" -le 0 ]]; then
@@ -125,7 +133,7 @@ echo -e "\nInput parameters:"
 echo "Input file: $INPUT_FILE"
 echo "Output file: $OUTPUT_FILE"
 echo "File with outlier scores: $OUTLIER_SCORES"
-echo "Species key: $SPECIES_KEY"
+echo "Species: $SPECIES"
 if [[ -n "$BASIS_OF_RECORD" ]]; then
     echo "Basis of record filter: $BASIS_OF_RECORD"
 fi
@@ -181,7 +189,10 @@ LOAD h3;
 
 -- Load H3 grid cell IDs with outlier scores of interest
 CREATE TEMP TABLE outlier_scores AS 
-SELECT CAST(column0 AS VARCHAR) AS h3_index, CAST(column1 AS FLOAT) AS outlier_score 
+SELECT 
+  CAST(column0 AS VARCHAR) AS h3_index, 
+  CAST(column1 AS VARCHAR) AS species,
+  CAST(column2 AS FLOAT) AS outlier_score 
 FROM read_csv('${OUTLIER_SCORES}', header=false, delim = '\t');
 
 -- Filter records and exclude outlier cells
@@ -191,7 +202,7 @@ COPY (
             *,
             h3_latlng_to_cell_string(decimallatitude, decimallongitude, ${H3_RESOLUTION})::VARCHAR AS h3_index
         FROM read_parquet('${INPUT_FILE}')
-        WHERE specieskey = ${SPECIES_KEY}"
+        WHERE species = '${SPECIES}'"
 
 # Add basis of record filter if specified
 if [[ -n "$BASIS_OF_RECORD" ]]; then
