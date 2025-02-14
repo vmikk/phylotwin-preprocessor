@@ -559,21 +559,25 @@ echo "Number of input files detected: " \$(find scores -name '*.txt.gz' | wc -l)
 
 echo -e "\n\n..Processing species occurrences"
 mkdir -p flt
+
+# Notes: species parameter is not provided to the `remove_outliers_from_parquet.sh`,
+# so the first species in the outlier scores file will be used
+
 find scores -name '*.txt.gz' \
   | parallel -j1 --halt now,fail=1 \
-    --rpl '{/:} s:(.*/)?([^/.]+)(\\.[^/]+)*\$:\$2:' \
+    --rpl '{fname} s:^.*/:: ; s/.txt.gz//' \
     "echo {} && \
     remove_outliers_from_parquet.sh \
       -i ${occ}'/*' \
       -w {} \
       -r ${params.outlier_h3_resolution} \
-      -o flt/{/:}.parquet \
-      -s {/:} \
+      -o flt/{fname}.parquet \
       -t ${task.cpus} \
       ${memoryArg} ${tempDirArg} \
       ${basisOfRecordArg} \
       ${duckdbArg} \
     && echo -e '\n\n'"
+
 
 ## Clean up
 if [ ${params.cleanupwd} == true ]; then
