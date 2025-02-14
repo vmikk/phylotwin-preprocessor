@@ -3,7 +3,7 @@
 ## Script to prepare data for spatial outlier detection with ELKI
 
 ## Output format:
-# LAT, LON, H3
+# LAT, LON, H3, Species
 
 ## Usage:
 # ./h3_preprocessor.sh \
@@ -13,7 +13,7 @@
 #   -s 2495667
 
 ## Main workflow:
-# - filter records using the `specieskey` column
+# - filter records using the `species` column
 # - optionally filter records using the `basis_of_record` column
 # - convert latitude/longitude coordinates to H3 cells
 # - keep unique H3 grids
@@ -21,11 +21,11 @@
 
 ## Function to display usage information
 usage() {
-    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES_KEY [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-d] [-c] [-e EXT_DIR] [-z COMPRESSION]"
+    echo "Usage: $0 -i INPUT_FILE -o OUTPUT_FILE -r H3_RESOLUTION -s SPECIES [-b BASIS_OF_RECORD] [-t THREADS] [-m MEMORY] [-x TEMP_DIR] [-d] [-c] [-e EXT_DIR] [-z COMPRESSION]"
     echo "  -i INPUT_FILE      : Input Parquet file path"
     echo "  -o OUTPUT_FILE     : Output Parquet file path"
     echo "  -r H3_RESOLUTION   : H3 resolution (0-15)"
-    echo "  -s SPECIES_KEY     : Species key for filtering"
+    echo "  -s SPECIES         : Species for filtering"
     echo "  -b BASIS_OF_RECORD : Comma-separated list of basis of record values to include (optional)"
     echo "  -t THREADS         : Number of CPU threads to use (optional)"
     echo "  -m MEMORY          : Memory limit (e.g., '100GB') (optional)"
@@ -41,7 +41,7 @@ usage() {
 INPUT_FILE=""
 OUTPUT_FILE=""
 H3_RESOLUTION=""
-SPECIES_KEY=""
+SPECIES=""
 BASIS_OF_RECORD=""
 THREADS=""
 MEMORY=""
@@ -57,7 +57,7 @@ while getopts "i:o:r:s:b:t:m:x:e:dcz:" opt; do
         i) INPUT_FILE="$OPTARG" ;;
         o) OUTPUT_FILE="$OPTARG" ;;
         r) H3_RESOLUTION="$OPTARG" ;;
-        s) SPECIES_KEY="$OPTARG" ;;
+        s) SPECIES="$OPTARG" ;;
         b) BASIS_OF_RECORD="$OPTARG" ;;
         t) THREADS="$OPTARG" ;;
         m) MEMORY="$OPTARG" ;;
@@ -71,7 +71,7 @@ while getopts "i:o:r:s:b:t:m:x:e:dcz:" opt; do
 done
 
 ## Validate input parameters
-if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$H3_RESOLUTION" || -z "$SPECIES_KEY" ]]; then
+if [[ -z "$INPUT_FILE" || -z "$OUTPUT_FILE" || -z "$H3_RESOLUTION" || -z "$SPECIES" ]]; then
     echo -e "Error: Missing required parameters!\n"
     usage
 fi
@@ -81,10 +81,11 @@ if ! [[ "$H3_RESOLUTION" =~ ^[0-9]+$ ]] || [ "$H3_RESOLUTION" -lt 0 ] || [ "$H3_
     usage
 fi
 
-if ! [[ "$SPECIES_KEY" =~ ^[0-9]+$ ]]; then
-    echo -e "Error: Species key must be a positive integer!\n"
-    usage
-fi
+## Species key validation -- deprecated
+# if ! [[ "$SPECIES_KEY" =~ ^[0-9]+$ ]]; then
+#     echo -e "Error: Species key must be a positive integer!\n"
+#     usage
+# fi
 
 ## Threads should be a positive integer
 if [[ -n "$THREADS" && "$THREADS" -le 0 ]]; then
@@ -128,7 +129,7 @@ echo -e "\nInput parameters:"
 echo "Input file: $INPUT_FILE"
 echo "Output file: $OUTPUT_FILE"
 echo "H3 resolution: $H3_RESOLUTION"
-echo "Species key: $SPECIES_KEY"
+echo "Species: ${SPECIES}"
 if [[ -n "$BASIS_OF_RECORD" ]]; then
     echo "Basis of record filter: $BASIS_OF_RECORD"
 fi
@@ -191,10 +192,10 @@ COPY (
         inp AS (
             SELECT 
                 h3_latlng_to_cell(decimallatitude, decimallongitude, ${H3_RESOLUTION})::UBIGINT AS h3_index,
-                specieskey
+                species
             FROM 
                 read_parquet('${INPUT_FILE}')
-            WHERE specieskey = ${SPECIES_KEY}"
+            WHERE species = '${SPECIES}'"
 
 # Add basis of record filter if specified
 if [[ -n "$BASIS_OF_RECORD" ]]; then
@@ -214,6 +215,7 @@ SQL_COMMAND+="),
                 h3_cell_to_lat(h3_index) AS LAT,
                 h3_cell_to_lng(h3_index) AS LON,
                 h3_h3_to_string(h3_index) as H3,
+                '${SPECIES}' as Species,
             FROM unique_grids
         )
 
