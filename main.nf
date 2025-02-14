@@ -919,7 +919,7 @@ workflow task_batching {
   // Run outlier removal for "large" species
   if (params.nodbscan == false) {
 
-    // Channel with species keys for spatial outlier removal
+    // Channel with species for spatial outlier removal
     // NB. results returned by `splitText` operator are always terminated by a `\n` newline character, so we need to trim it
     // Output: [ [1, 2, 3], glob_occ ]
     ch_large_species = pool_species_lists.out.occ_large
@@ -952,7 +952,7 @@ workflow task_batching {
 
     count_outliers(ch_all_scores)
 
-    // Low-occurrence filtering   tuple("low", raw_data, low_occ_specieskeys )
+    // Low-occurrence filtering   tuple("low", raw_data, low_occ_species )
     ch_occurrence_dir
       .merge(pool_species_lists.out.occ_small) { occ, spp -> tuple("low", occ, spp) }
       .set { ch_spk_low }
@@ -983,8 +983,8 @@ workflow task_batching {
       .merge(pool_species_lists.out.occ_large) { occ, spp -> tuple("large", occ, spp) }
       .set { ch_spk_large }
 
-    // tuple("low",   raw_data, low_occ_specieskeys )
-    // tuple("large", raw_data, large_occ_specieskeys )
+    // tuple("low",   raw_data, low_occ_species )
+    // tuple("large", raw_data, large_occ_speciess )
 
     ch_spk_low
       .concat(ch_spk_large)
