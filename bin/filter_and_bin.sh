@@ -62,7 +62,7 @@ while getopts "i:o:r:s:b:t:m:x:e:z:" opt; do
 done
 
 ## Validate input parameters
-if [[ -z "$INPUT" || -z "$OUTPUT_FILE" || -z "$H3_RESOLUTION" || -z "$SPECIES" ]]; then
+if [[ -z "$INPUT" || -z "$OUTPUT_FILE" || -z "$H3_RESOLUTION" ]]; then
     echo -e "Error: Missing required parameters!\n"
     usage
 fi
@@ -72,9 +72,18 @@ if ! [[ "$H3_RESOLUTION" =~ ^[0-9]+$ ]] || [ "$H3_RESOLUTION" -lt 0 ] || [ "$H3_
     usage
 fi
 
+## If file with species names is not provided, create it from the input parquet files
 if [ ! -r "$SPECIES" ]; then
-    echo -e "Error: Species names file '$SPECIES' does not exist or is not readable!\n"
-    usage
+    echo -e "\n..No file with species names provided, will create it from the input parquet files"
+    
+    SPECIES="${OUTPUT_FILE/.parquet/}__species_names.txt"
+    echo "COPY (
+        SELECT DISTINCT species
+        FROM read_parquet('${INPUT}')
+        WHERE species IS NOT NULL
+        ORDER BY species
+    ) TO '${SPECIES}' (HEADER FALSE);" | duckdb
+
 fi
 
 ## Threads should be a positive integer
